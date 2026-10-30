@@ -1,0 +1,6 @@
+{
+  "summary":  "Finalized Milestone 2 specification with strict process separation (never importing candidate code into supervisor), trusted scoring model, separated test/production Ed25519 keys, sanitized candidate error responses, and complete UI preservation.",
+  "updatedAt":  "2026-10-29T16:00:22.109197656Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

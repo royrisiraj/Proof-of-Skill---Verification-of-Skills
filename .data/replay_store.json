@@ -1,0 +1,217 @@
+[
+  {
+    "executionId": "exec_srv_mvts9eu7_auadc5",
+    "challengeId": "chal_py_session_v2",
+    "candidateCodeHash": "32c09f9fa2787354534b725678cd7d6a707020ac1a561256b946ee943961aa67",
+    "consumedAt": 1793292850092,
+    "response": {
+      "executionId": "exec_srv_mvts9eu7_auadc5",
+      "challengeId": "chal_py_session_v2",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 71,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 32c09f9fa278...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.07s ==================="
+      ],
+      "signature": "464807354fb887b41c6621932632f29411882e75c80f61ef6acb30186f5910252316330281d7d64c7147e5fc0f1dc0f8fab0f0cad7956fe31801c07345266b05",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-29T16:54:10.086Z"
+    }
+  },
+  {
+    "executionId": "exec_srv_mvts9nut_o3j746",
+    "challengeId": "chal_py_session_v2",
+    "candidateCodeHash": "2fd6c781962e67f83cccff7f67a90e94577cb942c462b6922d99804bd22cee7b",
+    "consumedAt": 1793292861767,
+    "response": {
+      "executionId": "exec_srv_mvts9nut_o3j746",
+      "challengeId": "chal_py_session_v2",
+      "status": "failed",
+      "executionSource": "server_verified",
+      "durationMs": 65,
+      "summary": {
+        "passedCount": 1,
+        "totalCount": 3,
+        "visiblePassed": 1,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "failed",
+          "durationMs": 1,
+          "message": "Expected active_count == 1, got 2. Index-skipping mutation defect."
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "failed",
+          "durationMs": 1,
+          "message": "Expected active_count == 1 at boundary, got 0."
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 2fd6c781962e...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge FAILED",
+        "test_exact_window_cutoff_boundary FAILED",
+        "=================== 1 passed, 2 failed in 0.07s ==================="
+      ],
+      "errorTrace": "Expected active_count == 1, got 2. Index-skipping mutation defect.",
+      "signature": "f6c159d36e7f697695d55866367bdd7cad1a86e8e1603c540d8d7f8d0e4b0ba758c04f1816e5af2259ef060e437851a0ba3c2d59f000f80aabe452a96bd07b0a",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-29T16:54:21.766Z"
+    }
+  },
+  {
+    "executionId": "exec_srv_mvtsab1u_59il2g",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "32c09f9fa2787354534b725678cd7d6a707020ac1a561256b946ee943961aa67",
+    "consumedAt": 1793292891824,
+    "response": {
+      "executionId": "exec_srv_mvtsab1u_59il2g",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 56,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 32c09f9fa278...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.06s ==================="
+      ],
+      "signature": "cc06494f2d50ca4aa3f7aeccff715d5cc47b9f73bc8090b3909b6b57f4262d52e0de0cbe8a35acae80d405fe188fe75aa7049a12be92f76d181d854908dcf509",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-29T16:54:51.818Z"
+    }
+  },
+  {
+    "executionId": "exec_srv_mvtsab3n_8cjr45",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "4a9e5ed675232726a561002a3a08d758187a8b51136a5b91140bb6653b773e5b",
+    "consumedAt": 1793292891883,
+    "response": {
+      "executionId": "exec_srv_mvtsab3n_8cjr45",
+      "challengeId": "CH-4982",
+      "status": "failed",
+      "executionSource": "server_verified",
+      "durationMs": 54,
+      "summary": {
+        "passedCount": 0,
+        "totalCount": 3,
+        "visiblePassed": 0,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "failed",
+          "durationMs": 10,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "failed",
+          "durationMs": 12,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "failed",
+          "durationMs": 14,
+          "message": "NameError: name 'events' is not defined"
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 4a9e5ed67523...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged FAILED",
+        "test_consecutive_expired_events_purge FAILED",
+        "test_exact_window_cutoff_boundary FAILED",
+        "=================== 0 passed, 3 failed in 0.05s ==================="
+      ],
+      "errorTrace": "NameError: name 'events' is not defined",
+      "signature": "8958c4b46e84d1523c20c95c511b659d8495ecc9efb18df234ab77b794d14168f7022a63c7033462fc7b6060a10be36d562dc19f8c73cca286da0b0e4f77ed09",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-29T16:54:51.881Z"
+    }
+  }
+]

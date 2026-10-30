@@ -1,0 +1,6 @@
+{
+  "name": "Proof of Skill",
+  "description": "Evidence-backed technical skills assessment and verification platform. Don't just show that you passed. Show how you solved the problem.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

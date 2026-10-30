@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
+:root,
+[data-theme="light"] {
+  /* Light Theme — Premium Blue Engineering Palette */
+  --bg-app: #E8EFF9;
+  --surface-primary: #F8FAFE;
+  --surface-secondary: #DCE7F5;
+  --surface-elevated: #FFFFFF;
+  --surface-selected: #D7E5F7;
+  --surface-code: #0D1520;
+
+  --text-primary: #172B4D;
+  --text-secondary: #4D607B;
+  --text-muted: #64748B;
+  --text-code: #E6EFFD;
+
+  --border-color: #CBD9EB;
+  --border-subtle: #DCE7F5;
+  --border-code: #1E2D42;
+
+  --accent-brand: #3569A8;
+  --accent-brand-hover: #28558D;
+  --accent-brand-text: #FFFFFF;
+
+  --status-success: #237A57;
+  --status-success-bg: #E3F5EC;
+  --status-success-border: #A3D9C0;
+
+  --status-warning: #94621B;
+  --status-warning-bg: #FEF7EC;
+  --status-warning-border: #F3DCB5;
+
+  --status-error: #B93838;
+  --status-error-bg: #FDF1F0;
+  --status-error-border: #F7C4C4;
+
+  --shadow-card: 0 1px 3px rgba(23, 43, 77, 0.05), 0 4px 16px rgba(23, 43, 77, 0.03);
+}
+
+.dark,
+[data-theme="dark"] {
+  /* Dark Theme — Deep Midnight Navy Palette */
+  --bg-app: #111B2B;
+  --surface-primary: #1B293D;
+  --surface-secondary: #22334A;
+  --surface-elevated: #263952;
+  --surface-selected: #233D5C;
+  --surface-code: #0A101A;
+
+  --text-primary: #F0F5FC;
+  --text-secondary: #B1C2D8;
+  --text-muted: #9AACC3;
+  --text-code: #E6EFFD;
+
+  --border-color: #34465F;
+  --border-subtle: #233348;
+  --border-code: #203046;
+
+  --accent-brand: #80B9F5;
+  --accent-brand-hover: #A1CEFA;
+  --accent-brand-text: #111B2B;
+
+  --status-success: #78C9A4;
+  --status-success-bg: #163327;
+  --status-success-border: #245740;
+
+  --status-warning: #F0C477;
+  --status-warning-bg: #352A18;
+  --status-warning-border: #5E4723;
+
+  --status-error: #F29A9A;
+  --status-error-bg: #381E1E;
+  --status-error-border: #6B2E2E;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+  }
+
+  body {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Custom subtle developer-tool scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(130, 138, 129, 0.3);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(130, 138, 129, 0.5);
+  }
+}
+
+/* Keyframes for subtle micro-interactions */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-float {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: floatSlow 6s ease-in-out 3s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-delayed {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,42 @@
+# Proof of Skill — Production Isolated Execution Service
+# Local and staging orchestration specification
+
+version: '3.8'
+
+services:
+  sandbox-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pos-isolated-runner
+    # Security: Drop all capabilities and restrict privileges
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # Resource boundaries
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # Network egress restriction: Evaluation runner is isolated from public egress
+    networks:
+      - runner-internal
+    environment:
+      - PORT=8080
+      - SANDBOX_API_KEY=${SANDBOX_API_KEY:-dev_runner_token_change_in_prod}
+      # RUNNER_PRIVATE_KEY is injected at runtime via Secret Manager or environment
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    read_only: false
+    tmpfs:
+      - /tmp/sandbox:size=128M,mode=1777
+
+networks:
+  runner-internal:
+    internal: true

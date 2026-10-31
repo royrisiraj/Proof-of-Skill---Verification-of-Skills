@@ -59,6 +59,13 @@ export interface Challenge {
   starterRegressionTest: string;
   referenceRegressionTest: string;
   testCases: TestCase[];
+  skills?: string[];
+  learningObjectives?: string[];
+  sampleIO?: {
+    input: string;
+    output: string;
+    explanation: string;
+  };
 }
 
 export interface CandidateSubmission {
@@ -147,4 +154,43 @@ export interface ProofCardData {
     anonymizedCandidate: boolean;
   };
   shareableUrl: string;
+}
+
+export interface AssessmentSession {
+  sessionId: string;
+  candidateId: string;
+  challengeId: string;
+  challengeTitle: string;
+  startedAt: string;
+  durationMinutes: number;
+  expiresAt: string;
+  gracePeriodMinutes: number;
+  status: 'active' | 'expired_recoverable' | 'expired_permanent' | 'completed' | 'abandoned';
+  lastSavedCode: string;
+  lastSavedRegressionTest: string;
+  diagnosisNotes?: {
+    rootCause?: string;
+    fixRationale?: string;
+    complexityTradeoffs?: string;
+  };
+  completedQuestions?: string[];
+  testResultsSummary?: {
+    passedCount: number;
+    totalCount: number;
+    regressionTestPassed: boolean;
+  };
+  createdAt: string;
+  updatedAt: string;
+  restoredAt?: string;
+  recoveryCount?: number;
+  completedAt?: string;
+}
+
+export interface RestoreSessionResponse {
+  status: 'restored' | 'expired_recoverable' | 'expired_permanent' | 'already_completed' | 'not_found';
+  session?: AssessmentSession;
+  challenge?: Challenge;
+  timeRemainingSeconds?: number;
+  graceRemainingSeconds?: number;
+  message?: string;
 }

@@ -213,5 +213,1075 @@
       "keyId": "pos_server_ed25519_v1",
       "timestamp": "2026-10-29T16:54:51.881Z"
     }
+  },
+  {
+    "executionId": "exec_1793432933819_cb63d2f15be2",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "32c09f9fa2787354534b725678cd7d6a707020ac1a561256b946ee943961aa67",
+    "requestFingerprint": "c55ca88751577e48a0a60323f33a08895af0d274160a2cc32143cb94085a103d",
+    "ownerToken": "4b74bee2e08e9ca33216a055ce2d0105",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793432933917,
+    "lastHeartbeat": 1793432933821,
+    "leaseExpiresAt": 1793432948821,
+    "response": {
+      "executionId": "exec_1793432933819_cb63d2f15be2",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 77,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 32c09f9fa278...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.08s ==================="
+      ],
+      "signature": "66d1988bbbbd15e09ada6833a071ed8183d3ecf1a630a9564b8a4ab60e821405ac7da80781741a5e716c518d39193a1a642e943449245cfa65d2f6fd0cc11d00",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T07:48:53.912Z"
+    }
+  },
+  {
+    "executionId": "exec_1793432933918_d9bc9bd11c04",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "4a9e5ed675232726a561002a3a08d758187a8b51136a5b91140bb6653b773e5b",
+    "requestFingerprint": "922a1679e6589b22fd62d56eabe054f1ec92650b750911122de41fce58e5e237",
+    "ownerToken": "adb46f11bd2ce93a8141518f04ce8e2b",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793432933967,
+    "lastHeartbeat": 1793432933919,
+    "leaseExpiresAt": 1793432948919,
+    "response": {
+      "executionId": "exec_1793432933918_d9bc9bd11c04",
+      "challengeId": "CH-4982",
+      "status": "failed",
+      "executionSource": "server_verified",
+      "durationMs": 47,
+      "summary": {
+        "passedCount": 0,
+        "totalCount": 3,
+        "visiblePassed": 0,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "failed",
+          "durationMs": 10,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "failed",
+          "durationMs": 12,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "failed",
+          "durationMs": 14,
+          "message": "NameError: name 'events' is not defined"
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 4a9e5ed67523...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged FAILED",
+        "test_consecutive_expired_events_purge FAILED",
+        "test_exact_window_cutoff_boundary FAILED",
+        "=================== 0 passed, 3 failed in 0.05s ==================="
+      ],
+      "errorTrace": "NameError: name 'events' is not defined",
+      "signature": "6fa13a09c45632d0932afacd967ec95e4bc3d3baccbc3623b479fe18705646ff0fcf9a5fbb15535111cfd804f4b8c2c0100904994b5fd7ae88e3b08dae0dc30f",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T07:48:53.966Z"
+    }
+  },
+  {
+    "executionId": "exec_1793432954622_3368d9cdbbc0",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "32c09f9fa2787354534b725678cd7d6a707020ac1a561256b946ee943961aa67",
+    "requestFingerprint": "c55ca88751577e48a0a60323f33a08895af0d274160a2cc32143cb94085a103d",
+    "ownerToken": "731de0cb95ab6606bffd6ec6c4986b0d",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793432954689,
+    "lastHeartbeat": 1793432954623,
+    "leaseExpiresAt": 1793432969623,
+    "response": {
+      "executionId": "exec_1793432954622_3368d9cdbbc0",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 53,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 32c09f9fa278...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.05s ==================="
+      ],
+      "signature": "cba09788ef16e28edfdf356b5634b4b44044860e383c05145417c5975c9c54bf8d0754a8893226e84cee7367836428e31a01cc32177d487399330641286eec0f",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T07:49:14.684Z"
+    }
+  },
+  {
+    "executionId": "exec_1793432954691_2c8fb455840c",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "4a9e5ed675232726a561002a3a08d758187a8b51136a5b91140bb6653b773e5b",
+    "requestFingerprint": "922a1679e6589b22fd62d56eabe054f1ec92650b750911122de41fce58e5e237",
+    "ownerToken": "24e4af6649c4bde2b59866b12292f2fc",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793432954734,
+    "lastHeartbeat": 1793432954691,
+    "leaseExpiresAt": 1793432969691,
+    "response": {
+      "executionId": "exec_1793432954691_2c8fb455840c",
+      "challengeId": "CH-4982",
+      "status": "failed",
+      "executionSource": "server_verified",
+      "durationMs": 42,
+      "summary": {
+        "passedCount": 0,
+        "totalCount": 3,
+        "visiblePassed": 0,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "failed",
+          "durationMs": 10,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "failed",
+          "durationMs": 12,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "failed",
+          "durationMs": 14,
+          "message": "NameError: name 'events' is not defined"
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 4a9e5ed67523...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged FAILED",
+        "test_consecutive_expired_events_purge FAILED",
+        "test_exact_window_cutoff_boundary FAILED",
+        "=================== 0 passed, 3 failed in 0.04s ==================="
+      ],
+      "errorTrace": "NameError: name 'events' is not defined",
+      "signature": "9b2547837941661d610c5d4550f923fdb969b38adb77f1419bde38cd19ff081a6d54673930aff23d0c2fe87423e64ab6d0af840455e72cf9ef30be8362d09e09",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T07:49:14.734Z"
+    }
+  },
+  {
+    "executionId": "exec_1793432997652_bc71ab660b9e",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "32c09f9fa2787354534b725678cd7d6a707020ac1a561256b946ee943961aa67",
+    "requestFingerprint": "c55ca88751577e48a0a60323f33a08895af0d274160a2cc32143cb94085a103d",
+    "ownerToken": "77b2a3b412db4077269a422c45d27911",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793432997713,
+    "lastHeartbeat": 1793432997653,
+    "leaseExpiresAt": 1793433012653,
+    "response": {
+      "executionId": "exec_1793432997652_bc71ab660b9e",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 48,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 32c09f9fa278...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.05s ==================="
+      ],
+      "signature": "6e1db5ed57557204a71d384e635b394b96cba3e553a748ffb785e268c6fb2fc369699ea5640c9b211e25c09a4ee7b67aa1e2baa6ab9302ae9bca3a6eaa617b09",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T07:49:57.708Z"
+    }
+  },
+  {
+    "executionId": "exec_1793432997717_bbb4664ff8ce",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "4a9e5ed675232726a561002a3a08d758187a8b51136a5b91140bb6653b773e5b",
+    "requestFingerprint": "922a1679e6589b22fd62d56eabe054f1ec92650b750911122de41fce58e5e237",
+    "ownerToken": "240f73af57fc123802fc6791a63480f8",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793432997767,
+    "lastHeartbeat": 1793432997717,
+    "leaseExpiresAt": 1793433012717,
+    "response": {
+      "executionId": "exec_1793432997717_bbb4664ff8ce",
+      "challengeId": "CH-4982",
+      "status": "failed",
+      "executionSource": "server_verified",
+      "durationMs": 48,
+      "summary": {
+        "passedCount": 0,
+        "totalCount": 3,
+        "visiblePassed": 0,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "failed",
+          "durationMs": 10,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "failed",
+          "durationMs": 12,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "failed",
+          "durationMs": 14,
+          "message": "NameError: name 'events' is not defined"
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 4a9e5ed67523...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged FAILED",
+        "test_consecutive_expired_events_purge FAILED",
+        "test_exact_window_cutoff_boundary FAILED",
+        "=================== 0 passed, 3 failed in 0.05s ==================="
+      ],
+      "errorTrace": "NameError: name 'events' is not defined",
+      "signature": "9abcf3925b39ea7e9a61630a8139cdaf0b6b46d8cddc73b8974b26c3184ed28f5ceafe755d0e9b89dc9b438945c769959e3f2d0898275da4db47e7b6c8eeeb03",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T07:49:57.766Z"
+    }
+  },
+  {
+    "executionId": "exec_srv_mvw3pgqy_xurjhq",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "32c09f9fa2787354534b725678cd7d6a707020ac1a561256b946ee943961aa67",
+    "consumedAt": 1793433007351,
+    "response": {
+      "executionId": "exec_srv_mvw3pgqy_xurjhq",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 232,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 32c09f9fa278...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.23s ==================="
+      ],
+      "signature": "a4f72e3e9e575933aa634b4995e9371cb614ebd16d1c721d8c8a76f1fbc427f73172b2b0021ee00f16715bedba296a747d4508d513d71f6049971bc865d9f705",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T07:50:07.346Z"
+    }
+  },
+  {
+    "executionId": "exec_srv_mvw3pkxi_yb3qxc",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "85ac6b3bd2a2d3ec4262616406a003a174f0902a337986b9259d620e8e44b6e4",
+    "consumedAt": 1793433012695,
+    "response": {
+      "executionId": "exec_srv_mvw3pkxi_yb3qxc",
+      "challengeId": "CH-4982",
+      "status": "failed",
+      "executionSource": "server_verified",
+      "durationMs": 160,
+      "summary": {
+        "passedCount": 0,
+        "totalCount": 3,
+        "visiblePassed": 0,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "failed",
+          "durationMs": 1,
+          "message": "Expected active_count == 0, got 99"
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "failed",
+          "durationMs": 1,
+          "message": "Expected active_count == 1, got 99. Index-skipping mutation defect."
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "failed",
+          "durationMs": 1,
+          "message": "Expected active_count == 1 at boundary, got 99."
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 85ac6b3bd2a2...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged FAILED",
+        "test_consecutive_expired_events_purge FAILED",
+        "test_exact_window_cutoff_boundary FAILED",
+        "=================== 0 passed, 3 failed in 0.16s ==================="
+      ],
+      "errorTrace": "Expected active_count == 0, got 99",
+      "signature": "fe586e30d55946d9b390e085cbee317a2edff426cd2492a276fc4ef54393f099b664e71a605d70b51b09665312c6e01d06cc297c2e2eb0aac6062bb22c171802",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T07:50:12.694Z"
+    }
+  },
+  {
+    "executionId": "exec_srv_mvw3po71_bgo7qr",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "32c09f9fa2787354534b725678cd7d6a707020ac1a561256b946ee943961aa67",
+    "idempotencyKey": "curl-test-idemp-1",
+    "consumedAt": 1793433016919,
+    "response": {
+      "executionId": "exec_srv_mvw3po71_bgo7qr",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 153,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 32c09f9fa278...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.15s ==================="
+      ],
+      "signature": "39d1194af6ede04ece2d143b5899e035e083525a9053d026c11145fb62e2c8e67d47225e287d24dc55bca940b54274b79fd2ed0d6f6c488ef5f85154fb9dec0f",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T07:50:16.918Z"
+    }
+  },
+  {
+    "executionId": "exec_1793434232249_840c43da2f16",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "32c09f9fa2787354534b725678cd7d6a707020ac1a561256b946ee943961aa67",
+    "requestFingerprint": "c55ca88751577e48a0a60323f33a08895af0d274160a2cc32143cb94085a103d",
+    "ownerToken": "d5ef5f7342b23a077a86886b7d44501c",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793434232309,
+    "lastHeartbeat": 1793434232251,
+    "leaseExpiresAt": 1793434247251,
+    "response": {
+      "executionId": "exec_1793434232249_840c43da2f16",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 40,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 32c09f9fa278...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.04s ==================="
+      ],
+      "signature": "78a6d81a85da9cd8d25e4e6bc070d3e78e9762d6c298e5233ba89b0d06f86844edc5cabc6f5c6c436c56e9e14cc3ca66c57b11e54df19a64d7a68f991777ee0c",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T08:10:32.304Z"
+    }
+  },
+  {
+    "executionId": "exec_1793434232311_8da578638e4e",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "4a9e5ed675232726a561002a3a08d758187a8b51136a5b91140bb6653b773e5b",
+    "requestFingerprint": "922a1679e6589b22fd62d56eabe054f1ec92650b750911122de41fce58e5e237",
+    "ownerToken": "b92f4d847bd37a438871eb598018b690",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793434232351,
+    "lastHeartbeat": 1793434232311,
+    "leaseExpiresAt": 1793434247311,
+    "response": {
+      "executionId": "exec_1793434232311_8da578638e4e",
+      "challengeId": "CH-4982",
+      "status": "failed",
+      "executionSource": "server_verified",
+      "durationMs": 38,
+      "summary": {
+        "passedCount": 0,
+        "totalCount": 3,
+        "visiblePassed": 0,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "failed",
+          "durationMs": 5,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "failed",
+          "durationMs": 5,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "failed",
+          "durationMs": 5,
+          "message": "NameError: name 'events' is not defined"
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 4a9e5ed67523...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged FAILED",
+        "test_consecutive_expired_events_purge FAILED",
+        "test_exact_window_cutoff_boundary FAILED",
+        "=================== 0 passed, 3 failed in 0.04s ==================="
+      ],
+      "errorTrace": "NameError: name 'events' is not defined",
+      "signature": "1285fec967968f000d44f51b5f3c308c0e7480ec745e49fddf6b9e3480387c17b74b1021077969a4e32cd02960ce04b1d9d37a657ec66201797f1df7e4f96a08",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T08:10:32.350Z"
+    }
+  },
+  {
+    "executionId": "exec_1793434449445_9e9cc14c2a71",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "5240bfd16f51c6882e2933e82e88d98ac5ba5cddfed7e10f521d72bfdc94faff",
+    "requestFingerprint": "5a9d8caeefdac3156593611403dda4e6748000507b6ef880c0486e4fb92ae9bf",
+    "ownerToken": "c03b29b6fb3596c2aefe2fec82593f75",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793434449508,
+    "lastHeartbeat": 1793434449447,
+    "leaseExpiresAt": 1793434464447,
+    "response": {
+      "executionId": "exec_1793434449445_9e9cc14c2a71",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 58,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 5240bfd16f51...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.06s ==================="
+      ],
+      "signature": "137620346c836bc57ed7df771216dcf6a455ef922f5178769109425e2e23387fcea70c84aafec147cf9368ac222f9231ec2cc2a411719d64fbde36bd06de5e05",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T08:14:09.506Z"
+    }
+  },
+  {
+    "executionId": "exec_1793434455818_bacb48377ae0",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "5240bfd16f51c6882e2933e82e88d98ac5ba5cddfed7e10f521d72bfdc94faff",
+    "requestFingerprint": "5a9d8caeefdac3156593611403dda4e6748000507b6ef880c0486e4fb92ae9bf",
+    "ownerToken": "212b685fc821827970eac42381001962",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793434455870,
+    "lastHeartbeat": 1793434455818,
+    "leaseExpiresAt": 1793434470818,
+    "response": {
+      "executionId": "exec_1793434455818_bacb48377ae0",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 48,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 5240bfd16f51...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.05s ==================="
+      ],
+      "signature": "bf980c6b6a0d31a12540d9448271c63fa02be0262a359d7e3f9942e6af913a4f9641cbb5010591bc0203cc274a350b2d918a95064ea7761b19cb6d00c62f360a",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T08:14:15.869Z"
+    }
+  },
+  {
+    "executionId": "exec_1793434482935_d02f0e03bdeb",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "5240bfd16f51c6882e2933e82e88d98ac5ba5cddfed7e10f521d72bfdc94faff",
+    "requestFingerprint": "5a9d8caeefdac3156593611403dda4e6748000507b6ef880c0486e4fb92ae9bf",
+    "ownerToken": "1364699aac1512c2c6d89931f048db60",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793434483001,
+    "lastHeartbeat": 1793434482937,
+    "leaseExpiresAt": 1793434497937,
+    "response": {
+      "executionId": "exec_1793434482935_d02f0e03bdeb",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 61,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 5240bfd16f51...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.06s ==================="
+      ],
+      "signature": "046d29cf1bf4d09de6c7de4ff549402706f49b863b790e462988de79528f345ca84440ddd0e0f2d9b371d1e91d9a73a2ae879dde9e31bed7e3858dd897e2310b",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T08:14:42.999Z"
+    }
+  },
+  {
+    "executionId": "exec_1793434557704_a6f74bd96280",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "32c09f9fa2787354534b725678cd7d6a707020ac1a561256b946ee943961aa67",
+    "requestFingerprint": "c55ca88751577e48a0a60323f33a08895af0d274160a2cc32143cb94085a103d",
+    "ownerToken": "d830de5b10daf831613f13b89040a641",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793434557770,
+    "lastHeartbeat": 1793434557706,
+    "leaseExpiresAt": 1793434572706,
+    "response": {
+      "executionId": "exec_1793434557704_a6f74bd96280",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 50,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 32c09f9fa278...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.05s ==================="
+      ],
+      "signature": "a4f1f413534d948327c94eca6bd8b74db151271f3d3adf72b92c0eaa56cf95910a3d34cedcbff0cf767e8813a3f0487b6f7c53973af4a2a33203b2b58e331f08",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T08:15:57.766Z"
+    }
+  },
+  {
+    "executionId": "exec_1793434557771_18abc6eded89",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "4a9e5ed675232726a561002a3a08d758187a8b51136a5b91140bb6653b773e5b",
+    "requestFingerprint": "922a1679e6589b22fd62d56eabe054f1ec92650b750911122de41fce58e5e237",
+    "ownerToken": "7ca8e7699902a56be95a7aac6e8abb86",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793434557809,
+    "lastHeartbeat": 1793434557771,
+    "leaseExpiresAt": 1793434572771,
+    "response": {
+      "executionId": "exec_1793434557771_18abc6eded89",
+      "challengeId": "CH-4982",
+      "status": "failed",
+      "executionSource": "server_verified",
+      "durationMs": 36,
+      "summary": {
+        "passedCount": 0,
+        "totalCount": 3,
+        "visiblePassed": 0,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "failed",
+          "durationMs": 5,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "failed",
+          "durationMs": 5,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "failed",
+          "durationMs": 5,
+          "message": "NameError: name 'events' is not defined"
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 4a9e5ed67523...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged FAILED",
+        "test_consecutive_expired_events_purge FAILED",
+        "test_exact_window_cutoff_boundary FAILED",
+        "=================== 0 passed, 3 failed in 0.04s ==================="
+      ],
+      "errorTrace": "NameError: name 'events' is not defined",
+      "signature": "7d6bd5fb088d7d232d5dbe8fac7f5dd7a35e548b47deb4a1d591a4bb961bc54fea886040f80b21237cfc378a521a280f830988dc752e1b28b39bd5dab446a804",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T08:15:57.808Z"
+    }
+  },
+  {
+    "executionId": "exec_1793435771815_8be6d15b89ac",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "32c09f9fa2787354534b725678cd7d6a707020ac1a561256b946ee943961aa67",
+    "requestFingerprint": "c55ca88751577e48a0a60323f33a08895af0d274160a2cc32143cb94085a103d",
+    "ownerToken": "32c4eefc2a7717ddb91e4f9ebb502eda",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793435771877,
+    "lastHeartbeat": 1793435771818,
+    "leaseExpiresAt": 1793435786818,
+    "response": {
+      "executionId": "exec_1793435771815_8be6d15b89ac",
+      "challengeId": "CH-4982",
+      "status": "passed",
+      "executionSource": "server_verified",
+      "durationMs": 46,
+      "summary": {
+        "passedCount": 3,
+        "totalCount": 3,
+        "visiblePassed": 3,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "passed",
+          "durationMs": 1
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "passed",
+          "durationMs": 1
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 32c09f9fa278...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged PASSED",
+        "test_consecutive_expired_events_purge PASSED",
+        "test_exact_window_cutoff_boundary PASSED",
+        "=================== 3 passed, 0 failed in 0.05s ==================="
+      ],
+      "signature": "fc21164def1d15a910a9e88e72072c3e398d3b2dee596e4c00d534e802db0a565571279c19fe70bc6d900d1d0241aef57793ec9721c6fffe6987ddf3f697900d",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T08:36:11.872Z"
+    }
+  },
+  {
+    "executionId": "exec_1793435771879_828ca3a3ee13",
+    "tenantId": "default",
+    "challengeId": "CH-4982",
+    "candidateCodeHash": "4a9e5ed675232726a561002a3a08d758187a8b51136a5b91140bb6653b773e5b",
+    "requestFingerprint": "922a1679e6589b22fd62d56eabe054f1ec92650b750911122de41fce58e5e237",
+    "ownerToken": "1d10a191985fb83035dd5abfc54fdcdf",
+    "state": "COMPLETED",
+    "fencingGeneration": 1,
+    "consumedAt": 1793435771920,
+    "lastHeartbeat": 1793435771879,
+    "leaseExpiresAt": 1793435786879,
+    "response": {
+      "executionId": "exec_1793435771879_828ca3a3ee13",
+      "challengeId": "CH-4982",
+      "status": "failed",
+      "executionSource": "server_verified",
+      "durationMs": 39,
+      "summary": {
+        "passedCount": 0,
+        "totalCount": 3,
+        "visiblePassed": 0,
+        "visibleTotal": 3,
+        "regressionTestPassed": false
+      },
+      "testCases": [
+        {
+          "id": "tc-01",
+          "name": "test_single_expired_event_purged",
+          "status": "failed",
+          "durationMs": 5,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-02",
+          "name": "test_consecutive_expired_events_purge",
+          "status": "failed",
+          "durationMs": 5,
+          "message": "NameError: name 'events' is not defined"
+        },
+        {
+          "id": "tc-03",
+          "name": "test_exact_window_cutoff_boundary",
+          "status": "failed",
+          "durationMs": 5,
+          "message": "NameError: name 'events' is not defined"
+        }
+      ],
+      "logs": [
+        "pytest session started for test_session_limiter.py (Server Native Python 3.10)",
+        "rootdir: /tmp/server_sandbox, candidate code SHA-256: 4a9e5ed67523...",
+        "collected 3 visible items",
+        "test_single_expired_event_purged FAILED",
+        "test_consecutive_expired_events_purge FAILED",
+        "test_exact_window_cutoff_boundary FAILED",
+        "=================== 0 passed, 3 failed in 0.04s ==================="
+      ],
+      "errorTrace": "NameError: name 'events' is not defined",
+      "signature": "7ec3085a11694758e9e5d0b7b4d66eff937f7a42883f512601bb3698e26f19db7a8e442ea569d6b8463ca54e686d7531af9faef58a01b5d1240649d39cd25807",
+      "keyId": "pos_server_ed25519_v1",
+      "timestamp": "2026-10-31T08:36:11.919Z"
+    }
   }
 ]

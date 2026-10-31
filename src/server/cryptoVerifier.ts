@@ -1,4 +1,14 @@
 import crypto from 'node:crypto';
+import canonicalize from 'canonicalize';
+
+export interface CanonicalSubmission {
+  tenantId: string;
+  candidateId: string;
+  challengeId: string;
+  challengeVersion: number;
+  attemptNumber: number;
+  candidateCodeHash: string;
+}
 
 export interface CanonicalSigningData {
   executionId: string;
@@ -8,6 +18,7 @@ export interface CanonicalSigningData {
   timestamp: string;
   visiblePassed: number;
   visibleTotal: number;
+  keyId?: string;
 }
 
 export interface TimestampValidationOptions {
@@ -32,10 +43,31 @@ export function computeCandidateCodeHash(code: string): string {
 }
 
 /**
+ * Computes deterministic RFC 8785 Canonical JSON SHA-256 fingerprint of a logical submission.
+ */
+export function computeCanonicalRequestFingerprint(submission: CanonicalSubmission): string {
+  const canonicalObj = {
+    attemptNumber: Number(submission.attemptNumber || 1),
+    candidateCodeHash: submission.candidateCodeHash,
+    candidateId: String(submission.candidateId || '').trim(),
+    challengeId: String(submission.challengeId || '').trim(),
+    challengeVersion: Number(submission.challengeVersion || 1),
+    tenantId: String(submission.tenantId || '').trim(),
+  };
+
+  const canonicalJson = canonicalize(canonicalObj);
+  if (!canonicalJson) {
+    throw new Error('RFC 8785 Canonicalization failed for submission');
+  }
+  return crypto.createHash('sha256').update(canonicalJson, 'utf-8').digest('hex');
+}
+
+/**
  * Constructs the canonical signing string agreed between runner and verifier.
  */
 export function buildCanonicalSigningString(data: CanonicalSigningData): string {
-  return `${data.executionId}|${data.challengeId}|${data.candidateCodeHash}|${data.status}|${data.timestamp}|${data.visiblePassed}|${data.visibleTotal}`;
+  const base = `${data.executionId}|${data.challengeId}|${data.candidateCodeHash}|${data.status}|${data.timestamp}|${data.visiblePassed}|${data.visibleTotal}`;
+  return data.keyId ? `${base}|${data.keyId}` : base;
 }
 
 /**

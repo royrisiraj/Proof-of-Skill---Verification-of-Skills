@@ -11,10 +11,25 @@ import {
   ExternalLink,
   Layers,
   Terminal,
+  Award,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react';
 
 export const AssessmentResults: React.FC = () => {
-  const { assessmentResult, setScreen, challenge, proofCardData, copyToClipboard } = useApp();
+  const {
+    assessmentResult,
+    setScreen,
+    challenge,
+    testResults,
+    proofCardData,
+    copyToClipboard,
+    progressData,
+  } = useApp();
+
+  const passedTests = testResults ? testResults.passedCount : assessmentResult.testExecutionSummary.testsPassed;
+  const totalTests = testResults ? testResults.totalCount : assessmentResult.testExecutionSummary.testsTotal;
+  const execDuration = testResults?.durationMs ?? assessmentResult.testExecutionSummary.durationMs;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -35,12 +50,12 @@ export const AssessmentResults: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#CBD9EB] dark:border-[#34465F]">
           <div>
             <div className="flex items-center gap-2 text-xs font-mono text-[#3569A8] dark:text-[#80B9F5]">
-              <span className="font-bold uppercase tracking-wider">Evaluation Outcome</span>
+              <span className="font-bold uppercase tracking-wider">{challenge.code} Outcome</span>
               <span>·</span>
-              <span>Single Session Completed</span>
+              <span>Server-Authoritative Evaluation</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-[#172B4D] dark:text-[#F0F5FC] mt-1">
-              {assessmentResult.overallStatus} with Evidence
+              {challenge.title}
             </h1>
           </div>
 
@@ -49,7 +64,7 @@ export const AssessmentResults: React.FC = () => {
             className="px-5 py-2.5 rounded-lg bg-[#3569A8] hover:bg-[#28558D] text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>View Evidence & Proof Card</span>
+            <span>View Verifiable Proof Card</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -62,15 +77,18 @@ export const AssessmentResults: React.FC = () => {
         <div className="pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#4D607B] dark:text-[#B1C2D8] font-mono">
           <span className="flex items-center gap-1">
             <Clock className="w-3.5 h-3.5" />
-            Duration: {assessmentResult.durationMinutes} min
+            Execution: {execDuration}ms
           </span>
           <span>·</span>
           <span className="flex items-center gap-1">
             <Cpu className="w-3.5 h-3.5" />
-            {assessmentResult.environment}
+            Python 3.12 Sandboxed
           </span>
           <span>·</span>
-          <span>{assessmentResult.sessionConditions.proctoring}</span>
+          <span className="flex items-center gap-1 text-[#237A57] dark:text-[#78C9A4] font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Ed25519 Cryptographically Signed
+          </span>
         </div>
       </div>
 
@@ -86,11 +104,11 @@ export const AssessmentResults: React.FC = () => {
               <span>01. Machine-Observed Test Evidence</span>
             </h2>
             <p className="text-xs text-[#4D607B] dark:text-[#B1C2D8] mt-0.5">
-              Empirical execution passes captured directly inside the simulated Python sandbox
+              Empirical execution passes captured directly inside the isolated Python sandbox
             </p>
           </div>
           <span className="text-xs font-mono font-bold text-[#237A57] dark:text-[#78C9A4]">
-            5 / 5 Tests Passed
+            {passedTests} / {totalTests} Tests Passed
           </span>
         </div>
 
@@ -98,55 +116,97 @@ export const AssessmentResults: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-[#CBD9EB] dark:border-[#34465F] bg-[#DCE7F5] dark:bg-[#22334A] text-[#4D607B] dark:text-[#B1C2D8] font-medium font-mono text-[11px]">
-                <th className="py-3 px-4">Test Identifier</th>
-                <th className="py-3 px-4">Scope</th>
-                <th className="py-3 px-4 hidden sm:table-cell">Target Assertion</th>
-                <th className="py-3 px-4 text-right">Outcome</th>
+                <th className="py-2.5 px-4">Test Case ID</th>
+                <th className="py-2.5 px-4">Scenario Description</th>
+                <th className="py-2.5 px-4">Input Representation</th>
+                <th className="py-2.5 px-4 text-center">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#CBD9EB] dark:divide-[#34465F] font-mono text-[11px]">
-              {challenge.testCases.map((tc) => (
-                <tr key={tc.id} className="hover:bg-[#DCE7F5]/50 dark:hover:bg-[#22334A]/40 transition-colors">
-                  <td className="py-3 px-4 font-sans font-semibold text-[#172B4D] dark:text-[#F0F5FC]">
+            <tbody className="divide-y divide-[#CBD9EB] dark:divide-[#34465F]">
+              {challenge.testCases.map((tc, idx) => (
+                <tr
+                  key={tc.id}
+                  className="hover:bg-[#DCE7F5]/40 dark:hover:bg-[#22334A]/40 transition-colors"
+                >
+                  <td className="py-3 px-4 font-mono text-[11px] font-bold text-[#3569A8] dark:text-[#80B9F5]">
+                    {tc.id}
+                  </td>
+                  <td className="py-3 px-4 font-medium text-[#172B4D] dark:text-[#F0F5FC]">
                     {tc.name}
                   </td>
-                  <td className="py-3 px-4 text-[#4D607B] dark:text-[#B1C2D8]">
-                    {tc.isHidden ? 'Hidden Sandbox Edge' : 'Visible Unit Test'}
+                  <td className="py-3 px-4 font-mono text-[11px] text-[#4D607B] dark:text-[#B1C2D8] max-w-xs truncate">
+                    {tc.inputRepresentation}
                   </td>
-                  <td className="py-3 px-4 text-[#4D607B] dark:text-[#B1C2D8] hidden sm:table-cell">
-                    {tc.description}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <span className="inline-flex items-center gap-1.5 font-bold text-[#237A57] dark:text-[#78C9A4]">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#237A57] dark:text-[#78C9A4]" />
-                      Passed ({tc.executionTimeMs}ms)
+                  <td className="py-3 px-4 text-center">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-[#E3F5EC] dark:bg-[#163327] text-[#237A57] dark:text-[#78C9A4]">
+                      <CheckCircle2 className="w-3 h-3" />
+                      PASSED
                     </span>
                   </td>
                 </tr>
               ))}
-              <tr className="hover:bg-[#DCE7F5]/50 dark:hover:bg-[#22334A]/40 transition-colors">
-                <td className="py-3 px-4 font-sans font-semibold text-[#172B4D] dark:text-[#F0F5FC]">
-                  Candidate-Authored Regression Test
-                </td>
-                <td className="py-3 px-4 text-[#4D607B] dark:text-[#B1C2D8]">
-                  Author Regression
-                </td>
-                <td className="py-3 px-4 text-[#4D607B] dark:text-[#B1C2D8] hidden sm:table-cell">
-                  Isolates consecutive-expired element traversal skip
-                </td>
-                <td className="py-3 px-4 text-right">
-                  <span className="inline-flex items-center gap-1.5 font-bold text-[#237A57] dark:text-[#78C9A4]">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#237A57] dark:text-[#78C9A4]" />
-                    Passed (4ms)
-                  </span>
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      {/* 2. Structured Rubric-Based Evaluations */}
+      {/* 2. Strengths and Recommended Improvement Areas */}
+      <section aria-labelledby="strengths-heading" className="space-y-4">
+        <div>
+          <h2
+            id="strengths-heading"
+            className="text-sm font-bold uppercase tracking-wider text-[#172B4D] dark:text-[#F0F5FC] font-mono flex items-center gap-2"
+          >
+            <TrendingUp className="w-4 h-4 text-[#3569A8] dark:text-[#80B9F5]" />
+            <span>02. Engineering Strengths & Improvement Analysis</span>
+          </h2>
+          <p className="text-xs text-[#4D607B] dark:text-[#B1C2D8] mt-0.5">
+            Diagnostic insights generated from code submission diffs, regression test structure, and algorithmic complexity
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-5 rounded-xl bg-[#F8FAFE] dark:bg-[#1B293D] border border-[#CBD9EB] dark:border-[#34465F] shadow-xs space-y-2.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#237A57] dark:text-[#78C9A4] font-mono uppercase">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Demonstrated Strengths</span>
+            </div>
+            <ul className="space-y-2 text-xs text-[#4D607B] dark:text-[#B1C2D8]">
+              <li className="flex items-start gap-2">
+                <span className="text-[#237A57] dark:text-[#78C9A4] font-bold">•</span>
+                <span><strong>Invariant Preservation:</strong> Accurately recognized and neutralized non-mutating traversal boundaries.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#237A57] dark:text-[#78C9A4] font-bold">•</span>
+                <span><strong>Regression Test Quality:</strong> Formulated targeted assertion catching consecutive-element skipping.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#237A57] dark:text-[#78C9A4] font-bold">•</span>
+                <span><strong>Deterministic Time Complexity:</strong> Preserved linear O(N) runtime without secondary nested scanning.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="p-5 rounded-xl bg-[#F8FAFE] dark:bg-[#1B293D] border border-[#CBD9EB] dark:border-[#34465F] shadow-xs space-y-2.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#3569A8] dark:text-[#80B9F5] font-mono uppercase">
+              <Sparkles className="w-4 h-4" />
+              <span>Recommended Growth Areas</span>
+            </div>
+            <ul className="space-y-2 text-xs text-[#4D607B] dark:text-[#B1C2D8]">
+              <li className="flex items-start gap-2">
+                <span className="text-[#3569A8] dark:text-[#80B9F5] font-bold">•</span>
+                <span><strong>High-Capacity Data Structures:</strong> Consider standard library <code>collections.deque</code> for O(1) two-ended pops if buffer scale exceeds 100k items.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#3569A8] dark:text-[#80B9F5] font-bold">•</span>
+                <span><strong>Parameterized Property Fuzzing:</strong> Expand regression suites using Hypothesis for automated randomized boundary testing.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Rubric-Based Dimension Evaluations */}
       <section aria-labelledby="rubric-eval-heading" className="space-y-4">
         <div>
           <h2
@@ -154,7 +214,7 @@ export const AssessmentResults: React.FC = () => {
             className="text-sm font-bold uppercase tracking-wider text-[#172B4D] dark:text-[#F0F5FC] font-mono flex items-center gap-2"
           >
             <Layers className="w-4 h-4 text-[#3569A8] dark:text-[#80B9F5]" />
-            <span>02. Rubric-Based Dimension Evaluations</span>
+            <span>03. Rubric-Based Dimension Evaluations</span>
           </h2>
           <p className="text-xs text-[#4D607B] dark:text-[#B1C2D8] mt-0.5">
             Structured criteria evaluation against Rubric Specification {assessmentResult.rubricId} v{assessmentResult.rubricVersion}

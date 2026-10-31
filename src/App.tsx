@@ -8,6 +8,7 @@ import { DebuggingWorkspace } from './screens/DebuggingWorkspace';
 import { AssessmentResults } from './screens/AssessmentResults';
 import { EvidenceReport } from './screens/EvidenceReport';
 import { PublicVerification } from './screens/PublicVerification';
+import { ProfileModal } from './components/ProfileModal';
 import { ShieldCheck } from 'lucide-react';
 
 const MainContent: React.FC = () => {
@@ -53,6 +54,7 @@ const MainContent: React.FC = () => {
       </footer>
 
       <ToastContainer />
+      <ProfileModal />
     </div>
   );
 };

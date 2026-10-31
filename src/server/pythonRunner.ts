@@ -10,6 +10,7 @@ import {
   verifyExecutionSignature,
 } from './cryptoVerifier';
 import { SandboxError } from './sandboxClient';
+import { getChallengeById } from './challengesCatalog';
 
 interface RawTestCaseResult {
   id: string;
@@ -30,7 +31,7 @@ export async function executePythonInServer(request: ExecuteRequest): Promise<Ex
   const candidateCodeHash = computeCandidateCodeHash(request.candidateCode);
 
   // 1. Create ephemeral scratch directory
-  const runId = `exec_srv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const runId = request.executionId || `exec_srv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `pos-run-${runId}-`));
 
   const solutionPath = path.join(tempDir, 'session_limiter.py');
@@ -39,13 +40,14 @@ export async function executePythonInServer(request: ExecuteRequest): Promise<Ex
   // 2. Write candidate solution file
   fs.writeFileSync(solutionPath, request.candidateCode, { encoding: 'utf-8', mode: 0o600 });
 
-  // 3. Write isolated test runner script
-  const runnerScript = `import sys, os, time, json
+  // 3. Resolve test runner script based on challengeId
+  const foundChallenge = getChallengeById(request.challengeId);
+  const runnerScript = foundChallenge
+    ? foundChallenge.runnerCodeGenerator(request.candidateCode)
+    : `import sys, os, time, json
 
-# Ephemeral runtime path
 sys.path.insert(0, ${JSON.stringify(tempDir)})
 
-# Disable socket creation inside candidate evaluation process
 try:
     import socket
     def _blocked_socket(*args, **kwargs):
@@ -65,13 +67,10 @@ test_cases = [
 
 try:
     import session_limiter
-
-    # Resolve evaluate_session_activity or SessionLimiter class
     fn = getattr(session_limiter, 'evaluate_session_activity', None)
     Limiter = getattr(session_limiter, 'SessionLimiter', None)
-
     if not fn and not Limiter:
-        raise AttributeError("Required function 'evaluate_session_activity' or class 'SessionLimiter' not found in candidate code.")
+        raise AttributeError("Required function 'evaluate_session_activity' not found in candidate code.")
 
     def run_eval(events, current_time, window_seconds, max_allowed):
         if fn:
@@ -97,7 +96,7 @@ try:
         test_cases[0]["status"] = "failed"
         test_cases[0]["message"] = f"Expected active_count == 0, got {res1.get('active_count')}"
 
-    # Test 2: Consecutive expired events (core index-skipping mutation bug)
+    # Test 2: Consecutive expired events
     t0 = time.time()
     res2 = run_eval([
         {"id": "exp_1", "timestamp": 20},
@@ -160,8 +159,11 @@ print(json.dumps(test_cases))
 
   let stdout = '';
   let stderr = '';
-  let exitCode: number | null = null;
   let didTimeout = false;
+
+  // Deadline starts before process spawn
+  const deadlineMs = 4000;
+  let timer: NodeJS.Timeout | null = null;
 
   try {
     await new Promise<void>((resolve, reject) => {
@@ -169,39 +171,54 @@ print(json.dumps(test_cases))
         cwd: tempDir,
         env: cleanEnv,
         stdio: ['ignore', 'pipe', 'pipe'],
+        detached: process.platform !== 'win32',
       });
 
-      const timer = setTimeout(() => {
+      const killProcessGroup = () => {
+        try {
+          if (child.pid && process.platform !== 'win32') {
+            process.kill(-child.pid, 'SIGKILL');
+          } else {
+            child.kill('SIGKILL');
+          }
+        } catch {
+          // child already dead
+        }
+      };
+
+      timer = setTimeout(() => {
         didTimeout = true;
-        child.kill('SIGKILL');
+        killProcessGroup();
         reject(
           new SandboxError(
             'EXECUTION_TIMEOUT',
             'Execution exceeded the 4.0 second server sandbox limit. Please optimize your code.'
           )
         );
-      }, 4000);
+      }, deadlineMs);
 
-      child.stdout.on('data', (data) => {
+      child.stdout.on('data', (chunk: Buffer) => {
         if (stdout.length < 65536) {
-          stdout += data.toString('utf-8');
+          const remaining = 65536 - stdout.length;
+          stdout += chunk.toString('utf-8').slice(0, remaining);
         }
       });
 
-      child.stderr.on('data', (data) => {
-        if (stderr.length < 65536) {
-          stderr += data.toString('utf-8');
+      child.stderr.on('data', (chunk: Buffer) => {
+        if (stderr.length < 16384) {
+          const remaining = 16384 - stderr.length;
+          stderr += chunk.toString('utf-8').slice(0, remaining);
         }
       });
 
-      child.on('close', (code) => {
-        clearTimeout(timer);
-        exitCode = code;
+      child.on('close', () => {
+        if (timer) clearTimeout(timer);
         resolve();
       });
 
       child.on('error', (err) => {
-        clearTimeout(timer);
+        if (timer) clearTimeout(timer);
+        killProcessGroup();
         reject(err);
       });
     });
@@ -215,6 +232,7 @@ print(json.dumps(test_cases))
       'The server Python execution runtime encountered an error. Please retry.'
     );
   } finally {
+    if (timer) clearTimeout(timer);
     // 5. Cleanup ephemeral files
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });

@@ -5,6 +5,7 @@ import { validatePayloadSize, ExecutionApiError } from '../executionClient';
 import { handleExecute } from '../../../server/executeHandler';
 import {
   computeCandidateCodeHash,
+  computeCanonicalRequestFingerprint,
   buildCanonicalSigningString,
   verifyExecutionSignature,
   validateTimestampFreshness,
@@ -14,6 +15,7 @@ import {
   ReplayStorageError,
   defaultReplayStore,
 } from '../../../server/replayStore';
+import { executeInSandbox, SandboxError } from '../../../server/sandboxClient';
 import type { Request, Response } from 'express';
 import type { ExecuteResponse } from '../types';
 
@@ -373,4 +375,188 @@ if (postPruneCheck.status === 'NEW') {
 await durableStore.clear();
 await pruneStore.clear();
 
-console.log('=== All 16 Milestone 3 Security & Unit Tests Passed Successfully ===');
+// Test 17: RFC 8785 Canonical JSON Fingerprint Determinism
+const submissionA = {
+  tenantId: 'tenant-alpha',
+  candidateId: 'cand-001',
+  challengeId: 'CH-4982',
+  challengeVersion: 1,
+  attemptNumber: 1,
+  candidateCodeHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+};
+
+// Same data, different insertion or casing logic
+const submissionB = {
+  candidateCodeHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+  tenantId: 'tenant-alpha',
+  attemptNumber: 1,
+  challengeVersion: 1,
+  challengeId: 'CH-4982',
+  candidateId: 'cand-001',
+};
+
+const fpA = computeCanonicalRequestFingerprint(submissionA);
+const fpB = computeCanonicalRequestFingerprint(submissionB);
+
+if (fpA === fpB && fpA.length === 64) {
+  console.log('✓ Test 17 Passed: RFC 8785 Canonical JSON fingerprint is deterministic and key-order independent.');
+} else {
+  console.error('✗ Test 17 Failed: Canonical fingerprints did not match:', { fpA, fpB });
+  process.exit(1);
+}
+
+// Test 18: Monotonic Fencing Generation Increments
+const testFencingStore = new FileDurableReplayStore(path.join(process.cwd(), '.data', 'test_fencing_store.json'));
+await testFencingStore.clear();
+
+const r1 = await testFencingStore.reserveExecution({
+  tenantId: 'tenant-1',
+  executionId: 'exec_fence_001',
+  challengeId: 'CH-4982',
+  candidateCodeHash: 'hash-abc',
+  ownerToken: 'owner-token-gen1',
+});
+
+if (r1.status === 'ALLOWED' && r1.fencingGeneration === 1) {
+  console.log('✓ Test 18.1 Passed: Initial reservation granted generation 1.');
+} else {
+  console.error('✗ Test 18.1 Failed:', r1);
+  process.exit(1);
+}
+
+// Simulate worker failure and subsequent re-reservation
+await testFencingStore.failExecution({
+  executionId: 'exec_fence_001',
+  ownerToken: 'owner-token-gen1',
+  error: 'Runner crashed',
+  backoffSec: 0, // 0s backoff for immediate retry in test
+});
+
+const r2 = await testFencingStore.reserveExecution({
+  tenantId: 'tenant-1',
+  executionId: 'exec_fence_001',
+  challengeId: 'CH-4982',
+  candidateCodeHash: 'hash-abc',
+  ownerToken: 'owner-token-gen2',
+});
+
+if (r2.status === 'ALLOWED' && r2.fencingGeneration === 2) {
+  console.log('✓ Test 18.2 Passed: Re-reservation granted strictly monotonic generation 2.');
+} else {
+  console.error('✗ Test 18.2 Failed:', r2);
+  process.exit(1);
+}
+
+// Test 19: Stale Worker Fencing Rejection (token mismatch)
+const staleCompleteSuccess = await testFencingStore.completeExecution({
+  executionId: 'exec_fence_001',
+  ownerToken: 'owner-token-gen1', // Stale token from generation 1!
+  response: mockVerifiedResponse,
+});
+
+if (!staleCompleteSuccess) {
+  console.log('✓ Test 19 Passed: Stale worker (generation 1) completion rejected by fencing check.');
+} else {
+  console.error('✗ Test 19 Failed: Stale worker completion was accepted!');
+  process.exit(1);
+}
+
+// Test 20: Retry Backoff Enforcement
+const testBackoffStore = new FileDurableReplayStore(path.join(process.cwd(), '.data', 'test_backoff_store.json'));
+await testBackoffStore.clear();
+
+await testBackoffStore.reserveExecution({
+  tenantId: 'tenant-1',
+  executionId: 'exec_backoff_001',
+  challengeId: 'CH-4982',
+  candidateCodeHash: 'hash-xyz',
+  ownerToken: 'owner-backoff-1',
+});
+
+// Fail with 10s backoff
+await testBackoffStore.failExecution({
+  executionId: 'exec_backoff_001',
+  ownerToken: 'owner-backoff-1',
+  error: 'Runner execution failed',
+  backoffSec: 10,
+});
+
+// Attempt immediate re-reservation
+const backoffReserveResult = await testBackoffStore.reserveExecution({
+  tenantId: 'tenant-1',
+  executionId: 'exec_backoff_001',
+  challengeId: 'CH-4982',
+  candidateCodeHash: 'hash-xyz',
+  ownerToken: 'owner-backoff-2',
+});
+
+if (backoffReserveResult.status === 'RETRY_BACKOFF_ACTIVE' && (backoffReserveResult.remainingBackoffSec ?? 0) > 0) {
+  console.log('✓ Test 20 Passed: Retry backoff enforced; premature re-reservation rejected with RETRY_BACKOFF_ACTIVE.');
+} else {
+  console.error('✗ Test 20 Failed: Backoff was not enforced:', backoffReserveResult);
+  process.exit(1);
+}
+
+// Test 21: Ambiguous Launch Quarantine
+await testBackoffStore.reserveExecution({
+  tenantId: 'tenant-1',
+  executionId: 'exec_ambig_001',
+  challengeId: 'CH-4982',
+  candidateCodeHash: 'hash-ambig',
+  ownerToken: 'owner-ambig-1',
+});
+
+await testBackoffStore.setAmbiguousLaunch({
+  executionId: 'exec_ambig_001',
+  ownerToken: 'owner-ambig-1',
+  error: 'Cloud Run jobs.run returned HTTP 503 before execution confirmation',
+});
+
+const ambigAttempt = await testBackoffStore.reserveExecution({
+  tenantId: 'tenant-1',
+  executionId: 'exec_ambig_001',
+  challengeId: 'CH-4982',
+  candidateCodeHash: 'hash-ambig',
+  ownerToken: 'owner-ambig-2',
+});
+
+if (ambigAttempt.status === 'IN_PROGRESS') {
+  console.log('✓ Test 21 Passed: Ambiguous launch placed in quarantine; concurrent attempts blocked as IN_PROGRESS.');
+} else {
+  console.error('✗ Test 21 Failed: Ambiguous launch was not quarantined:', ambigAttempt);
+  process.exit(1);
+}
+
+// Test 22: Production Fail-Closed Requirement (NODE_ENV=production without SANDBOX_SERVICE_URL)
+const prevNodeEnv = process.env.NODE_ENV;
+const prevSandboxUrl = process.env.SANDBOX_SERVICE_URL;
+
+process.env.NODE_ENV = 'production';
+delete process.env.SANDBOX_SERVICE_URL;
+
+try {
+  await executeInSandbox({
+    challengeId: 'CH-4982',
+    candidateCode: 'def purge(): pass',
+  });
+  console.error('✗ Test 22 Failed: Production mode without SANDBOX_SERVICE_URL did not fail closed!');
+  process.exit(1);
+} catch (err: unknown) {
+  if (err instanceof SandboxError && err.code === 'SANDBOX_UNAVAILABLE' && err.message.includes('Production configuration error')) {
+    console.log('✓ Test 22 Passed: Production mode without SANDBOX_SERVICE_URL fails closed with zero silent fallback.');
+  } else {
+    console.error('✗ Test 22 Failed with unexpected error:', err);
+    process.exit(1);
+  }
+} finally {
+  // Restore environment
+  if (prevNodeEnv) process.env.NODE_ENV = prevNodeEnv;
+  else delete process.env.NODE_ENV;
+  if (prevSandboxUrl) process.env.SANDBOX_SERVICE_URL = prevSandboxUrl;
+}
+
+// Cleanup test stores
+await testFencingStore.clear();
+await testBackoffStore.clear();
+
+console.log('=== All 22 Milestone 5 Production Security & Unit Tests Passed Successfully ===');

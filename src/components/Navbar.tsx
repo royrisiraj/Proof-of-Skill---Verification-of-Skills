@@ -21,6 +21,7 @@ export const Navbar: React.FC = () => {
     setIsFirstTimeUser,
     candidate,
     addToast,
+    setIsProfileModalOpen,
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -161,14 +162,17 @@ export const Navbar: React.FC = () => {
               </button>
             </div>
 
-            {/* Candidate Identity Thumbnail */}
+            {/* Candidate Identity Thumbnail & Profile Modal Trigger */}
             <div className="flex items-center gap-2 pl-2 border-l border-[#CBD9EB] dark:border-[#34465F]">
-              <div
-                className="w-8 h-8 rounded-full bg-[#D7E5F7] dark:bg-[#233D5C] text-[#3569A8] dark:text-[#80B9F5] border border-[#CBD9EB] dark:border-[#34465F] flex items-center justify-center text-xs font-bold shadow-xs"
-                title={`${candidate.fullName} · ${candidate.affiliation}`}
+              <button
+                type="button"
+                onClick={() => setIsProfileModalOpen(true)}
+                className="w-8 h-8 rounded-full bg-[#D7E5F7] dark:bg-[#233D5C] text-[#3569A8] dark:text-[#80B9F5] border border-[#CBD9EB] dark:border-[#34465F] hover:border-[#3569A8] dark:hover:border-[#80B9F5] flex items-center justify-center text-xs font-bold shadow-xs cursor-pointer transition-transform hover:scale-105"
+                title={`${candidate.fullName} · Profile & Account Settings`}
+                aria-label="Open Candidate Profile & Account Settings"
               >
                 {candidate.fullName.charAt(0)}
-              </div>
+              </button>
             </div>
 
             {/* Mobile menu trigger */}

@@ -1,6 +1,6 @@
 {
-  "summary":  "Finalized Milestone 2 specification with strict process separation (never importing candidate code into supervisor), trusted scoring model, separated test/production Ed25519 keys, sanitized candidate error responses, and complete UI preservation.",
-  "updatedAt":  "2026-10-29T16:00:22.109197656Z",
+  "summary":  "Final Milestone 5 Architecture and Security Specification (Version 8.0 - Definitive).\nResolves all four blocking security defects:\n1. Privileged C launcher (/usr/bin/run_nobody with CAP_SETUID/CAP_SETGID) enforcing non-root transition to UID 65534, aborting on any failure (never swallowing errors), with O_CLOEXEC and Linux DAC memory protection.\n2. Complete tenant-scoped Redis Cluster Lua state machine ({tenant:<tenantId>}) handling dual-key and single-key modes, monotonic fencing generation keys, durable AMBIGUOUS_LAUNCH records, exponential backoff, and full collision/replay resolution.\n3. Completely non-blocking raw selector pipe protocol (deadline started before process creation and stdin write, strict 64KB stdout limit, 16KB circular stderr buffer, single UTF-8 line enforcement, extra output rejection).\n4. Cloud Run v2 API launch reconciliation with durable AMBIGUOUS_LAUNCH quarantine (preventing blind duplicate launches), GCS generation preconditions (x-goog-if-generation-match: 0), zero-permission executor SA, and Direct VPC egress.\n5. Strict claim discipline throughout, expanded 22-vector adversarial test matrix, and final implementation readiness decision.",
+  "updatedAt":  "2026-10-31T07:37:31.966936253Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

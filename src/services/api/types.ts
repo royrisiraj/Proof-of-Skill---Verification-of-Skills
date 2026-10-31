@@ -5,6 +5,7 @@ export interface ExecuteRequest {
   candidateCode: string;
   regressionTestCode?: string;
   idempotencyKey?: string;
+  executionId?: string;
 }
 
 export interface TestCaseResult {

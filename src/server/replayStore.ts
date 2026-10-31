@@ -9,25 +9,60 @@ export class ReplayStorageError extends Error {
   }
 }
 
+export type ExecutionState = 'PENDING' | 'COMPLETED' | 'FAILED' | 'AMBIGUOUS_LAUNCH';
+
 export interface ReplayEntry {
   executionId: string;
+  tenantId?: string;
   challengeId: string;
   candidateCodeHash: string;
+  requestFingerprint?: string;
   idempotencyKey?: string;
+  ownerToken?: string;
+  state: ExecutionState;
+  fencingGeneration: number;
   consumedAt: number;
-  response: ExecuteResponse;
+  lastHeartbeat?: number;
+  leaseExpiresAt?: number;
+  nextRetryAt?: number;
+  error?: string;
+  response?: ExecuteResponse;
 }
 
 export interface ReplayCheckResult {
-  status: 'ALLOWED' | 'IDEMPOTENT_REPLAY' | 'REPLAY_ATTACK' | 'IDEMPOTENCY_CONFLICT';
+  status:
+    | 'ALLOWED'
+    | 'IDEMPOTENT_REPLAY'
+    | 'REPLAY_ATTACK'
+    | 'IDEMPOTENCY_CONFLICT'
+    | 'IN_PROGRESS'
+    | 'RETRY_BACKOFF_ACTIVE'
+    | 'FENCING_MISMATCH_STALE_WORKER'
+    | 'INCONSISTENT_RECORDS_FAIL_CLOSED';
   cachedResponse?: ExecuteResponse;
   reason?: string;
+  remainingBackoffSec?: number;
+  fencingGeneration?: number;
+}
+
+export interface ReserveParams {
+  tenantId?: string;
+  executionId: string;
+  challengeId: string;
+  candidateCodeHash: string;
+  requestFingerprint?: string;
+  idempotencyKey?: string;
+  ownerToken: string;
+  leaseTtlSec?: number;
 }
 
 export interface ReplayStore {
-  /**
-   * Atomically checks for replay/idempotency and records reservation.
-   */
+  reserveExecution(params: ReserveParams): Promise<ReplayCheckResult>;
+  renewLease(params: { executionId: string; ownerToken: string; requestFingerprint?: string; leaseTtlSec?: number }): Promise<boolean>;
+  completeExecution(params: { executionId: string; ownerToken: string; requestFingerprint?: string; response: ExecuteResponse }): Promise<boolean>;
+  failExecution(params: { executionId: string; ownerToken: string; requestFingerprint?: string; error: string; backoffSec?: number }): Promise<boolean>;
+  setAmbiguousLaunch(params: { executionId: string; ownerToken: string; error: string }): Promise<boolean>;
+
   checkAndRecord(params: {
     executionId: string;
     challengeId: string;
@@ -36,35 +71,27 @@ export interface ReplayStore {
     response: ExecuteResponse;
   }): Promise<ReplayCheckResult>;
 
-  /**
-   * Checks if an idempotency key is already registered with conflicting payload.
-   */
   checkIdempotencyKey(params: {
     idempotencyKey: string;
     challengeId: string;
     candidateCodeHash: string;
   }): Promise<{ status: 'NEW' | 'MATCH' | 'CONFLICT'; cachedResponse?: ExecuteResponse }>;
 
-  /**
-   * Cleans up expired entries.
-   */
   pruneExpired(maxAgeMs?: number): Promise<void>;
-
-  /**
-   * Clears all stored entries (primarily for testing).
-   */
   clear(): Promise<void>;
 }
 
-export const DEFAULT_REPLAY_TTL_MS = 10 * 60 * 1000; // 10 minutes
+export const DEFAULT_REPLAY_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+export const DEFAULT_LEASE_TTL_MS = 15 * 1000; // 15 seconds
 
 /**
- * File-backed durable replay store with atomic writes and memory cache.
- * Suitable for container restarts and persistent storage.
+ * File-backed durable replay store with atomic state transitions,
+ * fencing generation tracking, and memory caching.
  */
 export class FileDurableReplayStore implements ReplayStore {
   private memoryCache = new Map<string, ReplayEntry>();
   private idempotencyIndex = new Map<string, string>(); // idempotencyKey -> executionId
+  private fencingGenerations = new Map<string, number>(); // executionId -> monotonic generation
   private filePath: string;
   private isInitialized = false;
   private writeMutex: Promise<void> = Promise.resolve();
@@ -93,6 +120,9 @@ export class FileDurableReplayStore implements ReplayStore {
                 this.memoryCache.set(item.executionId, item);
                 if (item.idempotencyKey) {
                   this.idempotencyIndex.set(item.idempotencyKey, item.executionId);
+                }
+                if (item.fencingGeneration) {
+                  this.fencingGenerations.set(item.executionId, item.fencingGeneration);
                 }
               }
             }
@@ -124,10 +154,206 @@ export class FileDurableReplayStore implements ReplayStore {
           fs.unlinkSync(tempPath);
         }
       } catch {
-        // ignore cleanup error
+        // ignore
       }
       throw new ReplayStorageError('Durable replay storage write failure', err);
     }
+  }
+
+  public async reserveExecution(params: ReserveParams): Promise<ReplayCheckResult> {
+    await this.initialize();
+
+    let releaseLock: () => void = () => {};
+    const lock = new Promise<void>((resolve) => {
+      releaseLock = resolve;
+    });
+    const previousLock = this.writeMutex;
+    this.writeMutex = lock;
+
+    try {
+      await previousLock;
+      const now = Date.now();
+      const leaseTtl = (params.leaseTtlSec ? params.leaseTtlSec * 1000 : DEFAULT_LEASE_TTL_MS);
+
+      // Check idempotency record if key provided
+      if (params.idempotencyKey) {
+        const mappedExecId = this.idempotencyIndex.get(params.idempotencyKey);
+        if (mappedExecId && mappedExecId !== params.executionId) {
+          const mappedEntry = this.memoryCache.get(mappedExecId);
+          if (mappedEntry) {
+            if (
+              mappedEntry.candidateCodeHash !== params.candidateCodeHash ||
+              mappedEntry.challengeId !== params.challengeId
+            ) {
+              return {
+                status: 'IDEMPOTENCY_CONFLICT',
+                reason: `Idempotency key '${params.idempotencyKey}' was previously bound to different code or challenge.`,
+              };
+            }
+            if (mappedEntry.state === 'COMPLETED' && mappedEntry.response) {
+              return { status: 'IDEMPOTENT_REPLAY', cachedResponse: mappedEntry.response };
+            }
+            if (mappedEntry.state === 'PENDING' || mappedEntry.state === 'AMBIGUOUS_LAUNCH') {
+              return { status: 'IN_PROGRESS', reason: 'Previous submission with this idempotency key is currently executing.' };
+            }
+          }
+        }
+      }
+
+      const existing = this.memoryCache.get(params.executionId);
+      if (existing) {
+        // Replay of completed execution
+        if (existing.state === 'COMPLETED') {
+          if (
+            existing.candidateCodeHash === params.candidateCodeHash &&
+            existing.challengeId === params.challengeId
+          ) {
+            return { status: 'IDEMPOTENT_REPLAY', cachedResponse: existing.response };
+          }
+          return {
+            status: 'REPLAY_ATTACK',
+            reason: `Execution ID '${params.executionId}' was already consumed with different code submission.`,
+          };
+        }
+
+        // Active execution
+        if (existing.state === 'PENDING' || existing.state === 'AMBIGUOUS_LAUNCH') {
+          if (
+            existing.candidateCodeHash === params.candidateCodeHash &&
+            existing.challengeId === params.challengeId
+          ) {
+            return { status: 'IN_PROGRESS', reason: 'Execution is currently in progress.' };
+          }
+          return {
+            status: 'IDEMPOTENCY_CONFLICT',
+            reason: `Execution ID '${params.executionId}' is currently executing with different parameters.`,
+          };
+        }
+
+        // Failed state: check retry backoff
+        if (existing.state === 'FAILED') {
+          if (
+            existing.candidateCodeHash !== params.candidateCodeHash ||
+            existing.challengeId !== params.challengeId
+          ) {
+            return {
+              status: 'IDEMPOTENCY_CONFLICT',
+              reason: `Failed execution '${params.executionId}' cannot be reused with different code.`,
+            };
+          }
+          if (existing.nextRetryAt && now < existing.nextRetryAt) {
+            const remaining = Math.ceil((existing.nextRetryAt - now) / 1000);
+            return {
+              status: 'RETRY_BACKOFF_ACTIVE',
+              remainingBackoffSec: remaining,
+              reason: `Retry backoff active. Please wait ${remaining} seconds before re-attempting.`,
+            };
+          }
+        }
+      }
+
+      // Compute monotonic fencing generation
+      const currentGen = (this.fencingGenerations.get(params.executionId) || 0) + 1;
+      this.fencingGenerations.set(params.executionId, currentGen);
+
+      // Record new PENDING entry
+      const newEntry: ReplayEntry = {
+        executionId: params.executionId,
+        tenantId: params.tenantId,
+        challengeId: params.challengeId,
+        candidateCodeHash: params.candidateCodeHash,
+        requestFingerprint: params.requestFingerprint,
+        idempotencyKey: params.idempotencyKey,
+        ownerToken: params.ownerToken,
+        state: 'PENDING',
+        fencingGeneration: currentGen,
+        consumedAt: now,
+        lastHeartbeat: now,
+        leaseExpiresAt: now + leaseTtl,
+      };
+
+      this.memoryCache.set(params.executionId, newEntry);
+      if (params.idempotencyKey) {
+        this.idempotencyIndex.set(params.idempotencyKey, params.executionId);
+      }
+
+      await this.persist();
+      return { status: 'ALLOWED', fencingGeneration: currentGen };
+    } finally {
+      releaseLock();
+    }
+  }
+
+  public async renewLease(params: {
+    executionId: string;
+    ownerToken: string;
+    requestFingerprint?: string;
+    leaseTtlSec?: number;
+  }): Promise<boolean> {
+    await this.initialize();
+    const entry = this.memoryCache.get(params.executionId);
+    if (!entry || entry.state !== 'PENDING') return false;
+    if (entry.ownerToken !== params.ownerToken) return false;
+
+    const now = Date.now();
+    if (entry.leaseExpiresAt && now > entry.leaseExpiresAt) return false;
+
+    entry.lastHeartbeat = now;
+    entry.leaseExpiresAt = now + (params.leaseTtlSec ? params.leaseTtlSec * 1000 : DEFAULT_LEASE_TTL_MS);
+    await this.persist();
+    return true;
+  }
+
+  public async completeExecution(params: {
+    executionId: string;
+    ownerToken: string;
+    requestFingerprint?: string;
+    response: ExecuteResponse;
+  }): Promise<boolean> {
+    await this.initialize();
+    const entry = this.memoryCache.get(params.executionId);
+    if (!entry || (entry.state !== 'PENDING' && entry.state !== 'AMBIGUOUS_LAUNCH')) return false;
+    if (entry.ownerToken !== params.ownerToken) return false;
+
+    entry.state = 'COMPLETED';
+    entry.response = params.response;
+    entry.consumedAt = Date.now();
+    await this.persist();
+    return true;
+  }
+
+  public async failExecution(params: {
+    executionId: string;
+    ownerToken: string;
+    requestFingerprint?: string;
+    error: string;
+    backoffSec?: number;
+  }): Promise<boolean> {
+    await this.initialize();
+    const entry = this.memoryCache.get(params.executionId);
+    if (!entry || (entry.state !== 'PENDING' && entry.state !== 'AMBIGUOUS_LAUNCH')) return false;
+    if (entry.ownerToken !== params.ownerToken) return false;
+
+    const now = Date.now();
+    const backoffMs = (params.backoffSec !== undefined ? params.backoffSec : 5) * 1000;
+    entry.state = 'FAILED';
+    entry.error = params.error;
+    entry.nextRetryAt = now + backoffMs;
+    await this.persist();
+    return true;
+  }
+
+  public async setAmbiguousLaunch(params: { executionId: string; ownerToken: string; error: string }): Promise<boolean> {
+    await this.initialize();
+    const entry = this.memoryCache.get(params.executionId);
+    if (!entry || entry.state !== 'PENDING') return false;
+    if (entry.ownerToken !== params.ownerToken) return false;
+
+    entry.state = 'AMBIGUOUS_LAUNCH';
+    entry.error = params.error;
+    entry.leaseExpiresAt = Date.now() + 300 * 1000; // 5 min quarantine
+    await this.persist();
+    return true;
   }
 
   public async checkIdempotencyKey(params: {
@@ -147,7 +373,6 @@ export class FileDurableReplayStore implements ReplayStore {
       return { status: 'NEW' };
     }
 
-    // Check payload identity
     if (
       existingEntry.challengeId === params.challengeId &&
       existingEntry.candidateCodeHash === params.candidateCodeHash
@@ -158,7 +383,6 @@ export class FileDurableReplayStore implements ReplayStore {
       };
     }
 
-    // Key reuse with conflicting parameters
     return { status: 'CONFLICT' };
   }
 
@@ -171,7 +395,6 @@ export class FileDurableReplayStore implements ReplayStore {
   }): Promise<ReplayCheckResult> {
     await this.initialize();
 
-    // Mutex locking for atomic read-modify-write across async microtasks
     let releaseLock: () => void = () => {};
     const lock = new Promise<void>((resolve) => {
       releaseLock = resolve;
@@ -208,7 +431,6 @@ export class FileDurableReplayStore implements ReplayStore {
       // 2. Execution ID Replay Check
       const existing = this.memoryCache.get(params.executionId);
       if (existing) {
-        // Legitimate exact retry
         if (
           params.idempotencyKey &&
           existing.idempotencyKey === params.idempotencyKey &&
@@ -227,12 +449,14 @@ export class FileDurableReplayStore implements ReplayStore {
         };
       }
 
-      // 3. Atomically Record Entry
+      // 3. Atomically Record Entry as COMPLETED
       const newEntry: ReplayEntry = {
         executionId: params.executionId,
         challengeId: params.challengeId,
         candidateCodeHash: params.candidateCodeHash,
         idempotencyKey: params.idempotencyKey,
+        state: 'COMPLETED',
+        fencingGeneration: (this.fencingGenerations.get(params.executionId) || 0) + 1,
         consumedAt: Date.now(),
         response: params.response,
       };
@@ -242,9 +466,7 @@ export class FileDurableReplayStore implements ReplayStore {
         this.idempotencyIndex.set(params.idempotencyKey, params.executionId);
       }
 
-      // 4. Persist to durable storage
       await this.persist();
-
       return { status: 'ALLOWED' };
     } finally {
       releaseLock();
@@ -275,6 +497,7 @@ export class FileDurableReplayStore implements ReplayStore {
     await this.initialize();
     this.memoryCache.clear();
     this.idempotencyIndex.clear();
+    this.fencingGenerations.clear();
     try {
       if (fs.existsSync(this.filePath)) {
         await fs.promises.unlink(this.filePath);

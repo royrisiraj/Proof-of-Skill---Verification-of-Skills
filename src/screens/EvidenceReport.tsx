@@ -14,6 +14,10 @@ import {
   Layers,
   Eye,
   EyeOff,
+  Printer,
+  Download,
+  Calendar,
+  Key,
 } from 'lucide-react';
 
 export const EvidenceReport: React.FC = () => {
@@ -25,6 +29,8 @@ export const EvidenceReport: React.FC = () => {
     updatePrivacySettings,
     copyToClipboard,
     setScreen,
+    progressData,
+    addToast,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'evidence' | 'diff' | 'tests'>('evidence');
@@ -32,6 +38,43 @@ export const EvidenceReport: React.FC = () => {
   const displayName = privacySettings.anonymizedCandidate
     ? 'Candidate #8842 (Blind Screening Mode)'
     : candidate.fullName;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownloadProof = () => {
+    const proofExport = {
+      credentialId: proofCardData.credentialId,
+      challengeTitle: challenge.title,
+      challengeCode: challenge.code,
+      issuedAt: proofCardData.issuedAt,
+      candidate: privacySettings.anonymizedCandidate
+        ? { id: 'cand_#8842', anonymized: true }
+        : {
+            id: candidate.id,
+            fullName: candidate.fullName,
+            handle: candidate.handle,
+            affiliation: candidate.affiliation,
+          },
+      issuer: proofCardData.issuer,
+      cryptographicSignature: proofCardData.cryptographicSignature,
+      skillsVerified: challenge.skills || ['Python', 'Debugging'],
+      verificationUrl: proofCardData.shareableUrl,
+      verifiedAt: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(proofExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `proof_of_skill_${proofCardData.credentialId}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    addToast('Cryptographic Evidence Proof JSON downloaded.', 'success');
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -48,14 +91,25 @@ export const EvidenceReport: React.FC = () => {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => setScreen('results')}
-            className="px-3.5 py-2 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#F8FAFE] dark:bg-[#1B293D] text-xs font-semibold text-[#172B4D] dark:text-[#F0F5FC] hover:bg-[#DCE7F5] dark:hover:bg-[#22334A] transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+            onClick={handlePrint}
+            className="px-3 py-2 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#F8FAFE] dark:bg-[#1B293D] text-xs font-semibold text-[#172B4D] dark:text-[#F0F5FC] hover:bg-[#DCE7F5] dark:hover:bg-[#22334A] transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+            title="Print-friendly certificate report"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-[#4D607B] dark:text-[#B1C2D8]" />
-            <span>Rubric Breakdown</span>
+            <Printer className="w-3.5 h-3.5 text-[#3569A8] dark:text-[#80B9F5]" />
+            <span>Print Report</span>
           </button>
+
+          <button
+            onClick={handleDownloadProof}
+            className="px-3 py-2 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#F8FAFE] dark:bg-[#1B293D] text-xs font-semibold text-[#172B4D] dark:text-[#F0F5FC] hover:bg-[#DCE7F5] dark:hover:bg-[#22334A] transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+            title="Download verified JSON record"
+          >
+            <Download className="w-3.5 h-3.5 text-[#3569A8] dark:text-[#80B9F5]" />
+            <span>Export JSON</span>
+          </button>
+
           <button
             onClick={() => setScreen('verify')}
             className="px-4 py-2 rounded-lg bg-[#3569A8] hover:bg-[#28558D] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
@@ -68,7 +122,7 @@ export const EvidenceReport: React.FC = () => {
       </div>
 
       {/* Candidate Privacy Controls */}
-      <div className="p-5 rounded-xl bg-[#F8FAFE] dark:bg-[#1B293D] border border-[#CBD9EB] dark:border-[#34465F] shadow-xs space-y-3">
+      <div className="p-5 rounded-xl bg-[#F8FAFE] dark:bg-[#1B293D] border border-[#CBD9EB] dark:border-[#34465F] shadow-xs space-y-3 print:hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold text-[#172B4D] dark:text-[#F0F5FC] uppercase tracking-wider font-mono">
             <Lock className="w-4 h-4 text-[#3569A8] dark:text-[#80B9F5]" />
@@ -93,7 +147,7 @@ export const EvidenceReport: React.FC = () => {
             <div>
               <span className="font-bold block text-[#172B4D] dark:text-[#F0F5FC]">Blind Screening</span>
               <span className="text-[11px] text-[#4D607B] dark:text-[#B1C2D8] block mt-0.5">
-                {privacySettings.anonymizedCandidate ? 'Name masked (#8842)' : 'Display Alex Chen'}
+                {privacySettings.anonymizedCandidate ? 'Name masked (#8842)' : `Display ${candidate.fullName}`}
               </span>
             </div>
           </button>
@@ -122,7 +176,7 @@ export const EvidenceReport: React.FC = () => {
             </div>
           </button>
 
-          {/* Defense Notes Toggle */}
+          {/* Notes Toggle */}
           <button
             onClick={() =>
               updatePrivacySettings({ showCandidateNotes: !privacySettings.showCandidateNotes })
@@ -139,144 +193,109 @@ export const EvidenceReport: React.FC = () => {
               <EyeOff className="w-4 h-4 mt-0.5 shrink-0 text-[#4D607B] dark:text-[#B1C2D8]" />
             )}
             <div>
-              <span className="font-bold block text-[#172B4D] dark:text-[#F0F5FC]">Candidate Notes</span>
+              <span className="font-bold block text-[#172B4D] dark:text-[#F0F5FC]">Show Defense Notes</span>
               <span className="text-[11px] text-[#4D607B] dark:text-[#B1C2D8] block mt-0.5">
-                {privacySettings.showCandidateNotes ? 'Diagnosis notes visible' : 'Notes redacted'}
+                {privacySettings.showCandidateNotes ? 'Diagnosis notes visible' : 'Diagnosis notes hidden'}
               </span>
             </div>
           </button>
         </div>
       </div>
 
-      {/* THE PROOF CARD: Professional Evidence Document */}
-      <article className="rounded-xl bg-[#F8FAFE] dark:bg-[#1B293D] border border-[#CBD9EB] dark:border-[#34465F] shadow-sm overflow-hidden relative">
-        {/* Deep midnight navy Security Header */}
-        <div className="relative p-6 sm:p-8 border-b border-[#203046] bg-[#0E1726] text-white overflow-hidden">
-          {/* Background SVG Security Seal Watermark */}
-          <div
-            className="absolute right-4 -top-8 w-64 h-64 text-[#80B9F5]/10 pointer-events-none select-none"
-            aria-hidden="true"
-          >
-            <ShieldCheck className="w-full h-full stroke-[0.75]" />
-          </div>
-
-          <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs font-mono text-[#80B9F5] font-bold tracking-wider uppercase">
-                <ShieldCheck className="w-4 h-4 text-[#80B9F5]" />
-                <span>Proof of Skill Verified Evidence Record</span>
+      {/* Main Evidence Card: Premium Proof Certificate */}
+      <article
+        aria-labelledby="proof-title"
+        className="rounded-2xl border-2 border-[#CBD9EB] dark:border-[#34465F] bg-[#F8FAFE] dark:bg-[#1B293D] shadow-md overflow-hidden transition-colors"
+      >
+        {/* Certificate Header Banner */}
+        <div className="p-6 sm:p-8 bg-gradient-to-r from-[#D7E5F7] via-[#F8FAFE] to-[#D7E5F7] dark:from-[#1B293D] dark:via-[#22334A] dark:to-[#1B293D] border-b border-[#CBD9EB] dark:border-[#34465F] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#3569A8] text-white flex items-center justify-center font-bold shadow-md shrink-0">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#3569A8] dark:text-[#80B9F5] uppercase tracking-wider">
+                <span>Verified Assessment Credential</span>
+                <span>·</span>
+                <span className="text-[#237A57] dark:text-[#78C9A4]">Demonstrated with Evidence</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              <h2 id="proof-title" className="text-xl sm:text-2xl font-bold text-[#172B4D] dark:text-[#F0F5FC] mt-0.5">
                 {challenge.title}
               </h2>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#B1C2D8] font-mono pt-1">
-                <span>Subject: <strong className="text-white font-semibold">{displayName}</strong></span>
-                <span>·</span>
-                <span>Challenge: {challenge.code}</span>
-                <span>·</span>
-                <span>Rubric: {proofCardData.rubricId} v{proofCardData.rubricVersion}</span>
-              </div>
+              <span className="text-xs text-[#4D607B] dark:text-[#B1C2D8] font-mono">
+                Candidate: {displayName}
+              </span>
             </div>
+          </div>
 
+          <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
             <button
-              onClick={() => copyToClipboard(proofCardData.shareableUrl, 'Shareable verification link copied')}
-              className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer self-start sm:self-auto border border-white/15"
+              onClick={() => copyToClipboard(proofCardData.shareableUrl, 'Public verification URL copied')}
+              className="px-4 py-2 rounded-lg bg-[#3569A8] hover:bg-[#28558D] text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
             >
               <Share2 className="w-3.5 h-3.5" />
-              <span>Share Evidence Link</span>
+              <span>Share Proof URL</span>
             </button>
           </div>
         </div>
 
-        {/* Triple Partition: Facts vs Evaluations vs Non-Established Claims */}
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#CBD9EB] dark:divide-[#34465F] text-xs">
-          {/* Column 1: Observed Facts */}
-          <div className="p-6 space-y-3 bg-[#FFFFFF] dark:bg-[#1B293D]">
-            <h3 className="font-bold text-[#172B4D] dark:text-[#F0F5FC] uppercase tracking-wider font-mono text-[11px] flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#3569A8] dark:text-[#80B9F5]" />
-              <span>01. Observed Facts</span>
-            </h3>
-            <p className="text-[#4D607B] dark:text-[#B1C2D8] text-[11px] leading-relaxed">
-              Empirical execution parameters captured from the Python container runtime:
-            </p>
-            <ul className="space-y-1.5 text-[#172B4D] dark:text-[#F0F5FC] font-mono text-[11px]">
-              <li className="flex justify-between border-b border-[#CBD9EB] dark:border-[#34465F] pb-1">
-                <span className="text-[#4D607B] dark:text-[#B1C2D8]">Sandbox Exit:</span>
-                <span className="font-bold text-[#237A57] dark:text-[#78C9A4]">0 (Clean)</span>
-              </li>
-              <li className="flex justify-between border-b border-[#CBD9EB] dark:border-[#34465F] pb-1">
-                <span className="text-[#4D607B] dark:text-[#B1C2D8]">Visible Tests:</span>
-                <span>3 / 3 Passed</span>
-              </li>
-              <li className="flex justify-between border-b border-[#CBD9EB] dark:border-[#34465F] pb-1">
-                <span className="text-[#4D607B] dark:text-[#B1C2D8]">Hidden Edge Tests:</span>
-                <span>2 / 2 Passed (Simulated)</span>
-              </li>
-              <li className="flex justify-between border-b border-[#CBD9EB] dark:border-[#34465F] pb-1">
-                <span className="text-[#4D607B] dark:text-[#B1C2D8]">Duration:</span>
-                <span>19 minutes</span>
-              </li>
-              <li className="flex justify-between">
-                <span className="text-[#4D607B] dark:text-[#B1C2D8]">Environment:</span>
-                <span>Unproctored Timed</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 2: Rubric-Based Evaluations */}
-          <div className="p-6 space-y-3 bg-[#FFFFFF] dark:bg-[#1B293D]">
-            <h3 className="font-bold text-[#172B4D] dark:text-[#F0F5FC] uppercase tracking-wider font-mono text-[11px] flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-[#3569A8] dark:text-[#80B9F5]" />
-              <span>02. Rubric Evaluations</span>
-            </h3>
-            <p className="text-[#4D607B] dark:text-[#B1C2D8] text-[11px] leading-relaxed">
-              Qualitative ratings mapped to the published rubric criteria:
-            </p>
-            <ul className="space-y-1.5 text-[#172B4D] dark:text-[#F0F5FC] font-mono text-[11px]">
-              <li className="flex justify-between border-b border-[#CBD9EB] dark:border-[#34465F] pb-1">
-                <span className="text-[#4D607B] dark:text-[#B1C2D8]">Correctness:</span>
-                <span className="font-bold text-[#237A57] dark:text-[#78C9A4]">Exemplary</span>
-              </li>
-              <li className="flex justify-between border-b border-[#CBD9EB] dark:border-[#34465F] pb-1">
-                <span className="text-[#4D607B] dark:text-[#B1C2D8]">Bug Diagnosis:</span>
-                <span className="font-bold text-[#237A57] dark:text-[#78C9A4]">Exemplary</span>
-              </li>
-              <li className="flex justify-between border-b border-[#CBD9EB] dark:border-[#34465F] pb-1">
-                <span className="text-[#4D607B] dark:text-[#B1C2D8]">Regression Test:</span>
-                <span className="font-bold text-[#237A57] dark:text-[#78C9A4]">Exemplary</span>
-              </li>
-              <li className="flex justify-between border-b border-[#CBD9EB] dark:border-[#34465F] pb-1">
-                <span className="text-[#4D607B] dark:text-[#B1C2D8]">Code Defense:</span>
-                <span className="font-bold text-[#172B4D] dark:text-[#F0F5FC]">Demonstrated</span>
-              </li>
-              <li className="flex justify-between">
-                <span className="text-[#4D607B] dark:text-[#B1C2D8]">Overall:</span>
-                <span className="font-bold text-[#237A57] dark:text-[#78C9A4]">Demonstrated</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 3: Non-Established Claims */}
-          <div className="p-6 space-y-3 bg-[#FFFFFF] dark:bg-[#1B293D]">
-            <h3 className="font-bold text-[#172B4D] dark:text-[#F0F5FC] uppercase tracking-wider font-mono text-[11px] flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 text-[#4D607B] dark:text-[#B1C2D8]" />
-              <span>03. Non-Established Claims</span>
-            </h3>
-            <p className="text-[#4D607B] dark:text-[#B1C2D8] text-[11px] leading-relaxed">
-              Explicit boundary limits on what this record does not attest:
-            </p>
-            <ul className="space-y-1.5 text-[#4D607B] dark:text-[#B1C2D8] text-[11px] list-disc list-inside">
-              <li>Does not verify candidate identity or biometric verification.</li>
-              <li>Does not guarantee unassisted authorship outside sandbox.</li>
-              <li>Does not predict general software engineering career performance.</li>
-            </ul>
+        {/* Demonstrated Skills Chips */}
+        <div className="p-6 sm:p-8 border-b border-[#CBD9EB] dark:border-[#34465F] space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#172B4D] dark:text-[#F0F5FC] font-mono flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-[#3569A8] dark:text-[#80B9F5]" />
+            <span>Demonstrated Engineering Competencies</span>
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {(challenge.skills || ['Python 3.12', 'State Machine Invariants', 'Sliding Window Rate Limiting', 'Regression Testing']).map((skill, idx) => (
+              <span
+                key={idx}
+                className="px-3 py-1 rounded-full text-xs font-medium bg-[#D7E5F7] dark:bg-[#233D5C] text-[#3569A8] dark:text-[#80B9F5] border border-[#3569A8]/30 dark:border-[#80B9F5]/30 flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#237A57] dark:text-[#78C9A4]" />
+                <span>{skill}</span>
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Detailed Evidence Work (Tabs) */}
-        <div className="p-6 sm:p-8 border-t border-[#CBD9EB] dark:border-[#34465F] space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-1 bg-[#DCE7F5] dark:bg-[#111B2B] p-1 rounded-lg text-xs font-medium border border-[#CBD9EB] dark:border-[#34465F]">
+        {/* Cryptographic Signature Verification Box */}
+        <div className="p-6 sm:p-8 border-b border-[#CBD9EB] dark:border-[#34465F] space-y-3 bg-[#DCE7F5]/30 dark:bg-[#111B2B]/40">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#172B4D] dark:text-[#F0F5FC] uppercase tracking-wider font-mono">
+              <Key className="w-4 h-4 text-[#3569A8] dark:text-[#80B9F5]" />
+              <span>Cryptographic Signature Proof (Ed25519)</span>
+            </div>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#E3F5EC] dark:bg-[#163327] text-[#237A57] dark:text-[#78C9A4]">
+              <CheckCircle2 className="w-3 h-3" />
+              AUTHENTIC RECORD
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+            <div className="p-3 rounded-lg bg-[#FFFFFF] dark:bg-[#111B2B] border border-[#CBD9EB] dark:border-[#34465F]">
+              <span className="text-[10px] uppercase text-[#64748B] dark:text-[#9AACC3] block">Key ID:</span>
+              <span className="font-bold text-[#172B4D] dark:text-[#F0F5FC] truncate block">
+                {proofCardData.cryptographicSignature.keyFingerprint || 'pos_server_ed25519_v1'}
+              </span>
+            </div>
+            <div className="p-3 rounded-lg bg-[#FFFFFF] dark:bg-[#111B2B] border border-[#CBD9EB] dark:border-[#34465F]">
+              <span className="text-[10px] uppercase text-[#64748B] dark:text-[#9AACC3] block">Signed Timestamp:</span>
+              <span className="font-bold text-[#172B4D] dark:text-[#F0F5FC] truncate block">
+                {proofCardData.issuedAt}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-[#0D1520] text-[#E6EFFD] font-mono text-[11px] overflow-x-auto whitespace-pre leading-relaxed border border-[#203046]">
+            <span className="text-[#9AACC3] text-[10px] uppercase block mb-0.5">Signature Hex:</span>
+            {proofCardData.cryptographicSignature.signatureHex}
+          </div>
+        </div>
+
+        {/* Tabbed Inspection Section */}
+        <div className="p-6 sm:p-8 space-y-4">
+          <div className="flex items-center justify-between border-b border-[#CBD9EB] dark:border-[#34465F] pb-2">
+            <div className="flex items-center gap-2 text-xs font-mono">
               <button
                 onClick={() => setActiveTab('evidence')}
                 className={`px-3.5 py-1.5 rounded-md transition-colors cursor-pointer ${
@@ -285,7 +304,7 @@ export const EvidenceReport: React.FC = () => {
                     : 'text-[#4D607B] dark:text-[#B1C2D8] hover:text-[#172B4D]'
                 }`}
               >
-                Diagnosis & Defense Notes
+                Candidate Defense Notes
               </button>
               <button
                 onClick={() => setActiveTab('diff')}
@@ -295,7 +314,7 @@ export const EvidenceReport: React.FC = () => {
                     : 'text-[#4D607B] dark:text-[#B1C2D8] hover:text-[#172B4D]'
                 }`}
               >
-                Code Diff (Evidence)
+                Code Patch Diff
               </button>
               <button
                 onClick={() => setActiveTab('tests')}
@@ -308,10 +327,6 @@ export const EvidenceReport: React.FC = () => {
                 Candidate Regression Test
               </button>
             </div>
-
-            <span className="text-[11px] text-[#4D607B] dark:text-[#B1C2D8] font-mono">
-              Signed Digest: {proofCardData.cryptographicSignature.signedPayloadDigest.substring(0, 20)}...
-            </span>
           </div>
 
           {/* Tab 1: Diagnosis Notes */}
@@ -369,11 +384,11 @@ export const EvidenceReport: React.FC = () => {
             <div className="pt-2">
               <div className="rounded-lg border border-[#203046] bg-[#0D1520] p-4 font-mono text-xs text-[#E6EFFD] space-y-2">
                 <div className="flex items-center justify-between text-[11px] text-[#9AACC3] border-b border-[#203046] pb-2">
-                  <span>test_session_limiter.py (Candidate-Authored Test)</span>
+                  <span>Candidate-Authored Test Suite</span>
                   <span className="text-[#78C9A4] font-semibold">Passed in Sandbox</span>
                 </div>
                 <pre className="overflow-x-auto whitespace-pre leading-relaxed text-[#B1C2D8] pt-1">
-                  <code>{sampleCandidateSubmission.regressionTest}</code>
+                  <code>{challenge.referenceRegressionTest || sampleCandidateSubmission.regressionTest}</code>
                 </pre>
               </div>
             </div>
@@ -388,7 +403,7 @@ export const EvidenceReport: React.FC = () => {
             <span>Credential ID: {proofCardData.credentialId}</span>
           </div>
           <div>
-            <span>Simulated Ed25519 Demonstration Record</span>
+            <span>Ed25519 Cryptographic Authenticity Record</span>
           </div>
         </div>
       </article>

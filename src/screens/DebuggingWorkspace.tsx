@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { CodeEditor } from '../components/CodeEditor';
 import {
+  Clock,
   Play,
   RotateCcw,
   CheckCircle2,
@@ -16,11 +17,17 @@ import {
   AlertTriangle,
   RefreshCw,
   ShieldCheck,
+  Save,
+  HelpCircle,
+  ChevronDown,
+  Layers,
 } from 'lucide-react';
 
 export const DebuggingWorkspace: React.FC = () => {
   const {
+    challenges,
     challenge,
+    selectChallenge,
     candidateCode,
     setCandidateCode,
     regressionTestCode,
@@ -40,43 +47,121 @@ export const DebuggingWorkspace: React.FC = () => {
     runTests,
     resetToStarterCode,
     loadSampleSolution,
+    saveCurrentDraft,
+    isSavingDraft,
     submitChallenge,
+    activeSession,
+    sessionTimeRemaining,
+    sessionExpiryStatus,
+    recoverCurrentSession,
   } = useApp();
 
   const [activeEditorTab, setActiveEditorTab] = useState<'source' | 'tests'>('source');
-  const [activeInstructionTab, setActiveInstructionTab] = useState<'overview' | 'diagnosis'>('overview');
+  const [activeInstructionTab, setActiveInstructionTab] = useState<'overview' | 'sampleIO' | 'diagnosis'>('overview');
+  const [challengeMenuOpen, setChallengeMenuOpen] = useState(false);
+
+  const sourceFileName = `${challenge.code.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20)}.py`;
+  const testFileName = `test_${sourceFileName}`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Top Workspace Bar: Developer Tool Header */}
+      {/* Top Workspace Bar: Developer Tool Header & Challenge Selector */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#CBD9EB] dark:border-[#34465F]">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-[#4D607B] dark:text-[#B1C2D8] font-mono">
-            <span className="font-semibold text-[#3569A8] dark:text-[#80B9F5]">
-              {challenge.code}
-            </span>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs text-[#4D607B] dark:text-[#B1C2D8] font-mono flex-wrap">
+            {/* Quick Challenge Switcher Dropdown */}
+            <div className="relative inline-block">
+              <button
+                onClick={() => setChallengeMenuOpen(!challengeMenuOpen)}
+                className="px-2.5 py-1 rounded bg-[#D7E5F7] dark:bg-[#233D5C] text-[#3569A8] dark:text-[#80B9F5] font-semibold border border-[#3569A8]/30 dark:border-[#80B9F5]/30 flex items-center gap-1.5 cursor-pointer hover:bg-[#CBD9EB] dark:hover:bg-[#28496D] transition-colors"
+                title="Switch active challenge"
+              >
+                <span>{challenge.code}</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+
+              {challengeMenuOpen && (
+                <div className="absolute left-0 top-full mt-1.5 w-72 rounded-xl bg-[#F8FAFE] dark:bg-[#1B293D] border border-[#CBD9EB] dark:border-[#34465F] shadow-xl z-30 p-1.5 max-h-80 overflow-y-auto divide-y divide-[#CBD9EB]/40 dark:divide-[#34465F]/40">
+                  <div className="px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#64748B] dark:text-[#9AACC3]">
+                    Select Active Challenge
+                  </div>
+                  {challenges.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        selectChallenge(c.id);
+                        setChallengeMenuOpen(false);
+                      }}
+                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors cursor-pointer flex flex-col gap-0.5 ${
+                        c.id === challenge.id
+                          ? 'bg-[#D7E5F7] dark:bg-[#233D5C] text-[#3569A8] dark:text-[#80B9F5] font-semibold'
+                          : 'hover:bg-[#DCE7F5] dark:hover:bg-[#22334A] text-[#172B4D] dark:text-[#F0F5FC]'
+                      }`}
+                    >
+                      <span className="font-bold truncate">{c.title}</span>
+                      <span className="text-[10px] text-[#4D607B] dark:text-[#B1C2D8] font-mono">
+                        {c.code} · {c.difficulty}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <span aria-hidden="true">·</span>
             <span>{challenge.language}</span>
             <span aria-hidden="true">·</span>
             <span>{challenge.difficulty} Difficulty</span>
             <span aria-hidden="true">·</span>
-            <span>~{challenge.recommendedMinutes} min</span>
+            {sessionTimeRemaining !== null ? (
+              <span
+                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono font-semibold ${
+                  sessionTimeRemaining > 300
+                    ? 'bg-[#D7E5F7] dark:bg-[#233D5C] text-[#3569A8] dark:text-[#80B9F5]'
+                    : sessionTimeRemaining > 0
+                    ? 'bg-[#FEF3D6] dark:bg-[#3E2D11] text-[#94621B] dark:text-[#F0C477]'
+                    : 'bg-[#FBE8E8] dark:bg-[#381E1E] text-[#C23934] dark:text-[#F29A9A]'
+                }`}
+                title="Server-Authoritative Session Timer"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                {sessionTimeRemaining > 0
+                  ? `Remaining: ${Math.floor(sessionTimeRemaining / 60)}:${(sessionTimeRemaining % 60).toString().padStart(2, '0')}`
+                  : sessionExpiryStatus === 'expired_recoverable'
+                  ? 'Expired (Grace Active)'
+                  : 'Session Expired'}
+              </span>
+            ) : (
+              <span>~{challenge.recommendedMinutes} min</span>
+            )}
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#172B4D] dark:text-[#F0F5FC] mt-1">
+
+          <h1 className="text-2xl font-bold tracking-tight text-[#172B4D] dark:text-[#F0F5FC]">
             {challenge.title}
           </h1>
         </div>
 
-        {/* Demo Helper Actions */}
-        <div className="flex items-center gap-2 self-start md:self-center">
+        {/* Action Controls: Save Draft, Reset, Load Sample */}
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
+          <button
+            onClick={saveCurrentDraft}
+            disabled={isSavingDraft}
+            className="px-3.5 py-2 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#F8FAFE] dark:bg-[#1B293D] text-xs font-semibold text-[#172B4D] dark:text-[#F0F5FC] hover:bg-[#DCE7F5] dark:hover:bg-[#22334A] transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+            title="Save draft code to persistent storage"
+          >
+            {isSavingDraft ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-[#3569A8] dark:text-[#80B9F5]" />}
+            <span>{isSavingDraft ? 'Saving...' : 'Save Draft'}</span>
+          </button>
+
           <button
             onClick={loadSampleSolution}
             className="px-3.5 py-2 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#F8FAFE] dark:bg-[#1B293D] text-xs font-semibold text-[#172B4D] dark:text-[#F0F5FC] hover:bg-[#DCE7F5] dark:hover:bg-[#22334A] transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
             title="Load reference patch, regression test, and candidate defense notes"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#3569A8] dark:text-[#80B9F5]" />
-            <span>Load Sample Solution (Demo)</span>
+            <span>Reference Solution</span>
           </button>
+
           <button
             onClick={resetToStarterCode}
             className="px-3.5 py-2 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#F8FAFE] dark:bg-[#1B293D] text-xs font-medium text-[#172B4D] dark:text-[#F0F5FC] hover:bg-[#DCE7F5] dark:hover:bg-[#22334A] transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
@@ -88,41 +173,70 @@ export const DebuggingWorkspace: React.FC = () => {
         </div>
       </div>
 
+      {/* Grace period warning banner if session is expired_recoverable */}
+      {sessionExpiryStatus === 'expired_recoverable' && (
+        <div className="rounded-xl bg-[#FEF3D6] dark:bg-[#3E2D11] border border-[#F0C477] dark:border-[#7A551A] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#94621B] dark:text-[#F0C477]">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-[#94621B] dark:text-[#F0C477]" />
+            <div>
+              <strong className="font-semibold block sm:inline mr-1">Assessment Session Expired (Grace Period Active):</strong>
+              <span>Your drafts are preserved. You have a 5-minute recovery grace period to recover your session.</span>
+            </div>
+          </div>
+          <button
+            onClick={() => recoverCurrentSession()}
+            className="px-3.5 py-1.5 rounded-lg bg-[#94621B] hover:bg-[#784E13] text-white font-semibold text-xs transition-colors shrink-0 self-start sm:self-auto cursor-pointer shadow-xs"
+          >
+            Recover (+5 min grace)
+          </button>
+        </div>
+      )}
+
       {/* Main Focused Environment Layout: 2 Columns on Desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column (5 Cols): Instructions & Candidate Defense Form */}
+        {/* Left Column (5 Cols): Instructions, Sample IO, & Candidate Defense Form */}
         <div className="lg:col-span-5 space-y-5">
           <div className="rounded-xl bg-[#F8FAFE] dark:bg-[#1B293D] border border-[#CBD9EB] dark:border-[#34465F] shadow-xs overflow-hidden">
             {/* Segmented Tab Header */}
-            <div className="flex border-b border-[#CBD9EB] dark:border-[#34465F] bg-[#DCE7F5] dark:bg-[#111B2B] p-1">
+            <div className="flex border-b border-[#CBD9EB] dark:border-[#34465F] bg-[#DCE7F5] dark:bg-[#111B2B] p-1 gap-1">
               <button
                 onClick={() => setActiveInstructionTab('overview')}
-                className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                   activeInstructionTab === 'overview'
                     ? 'bg-[#FFFFFF] dark:bg-[#263952] text-[#172B4D] dark:text-[#F0F5FC] shadow-xs font-semibold'
                     : 'text-[#4D607B] hover:text-[#172B4D] dark:text-[#B1C2D8] dark:hover:text-[#F0F5FC]'
                 }`}
               >
-                1. Problem & Incident Brief
+                1. Incident Brief
+              </button>
+              <button
+                onClick={() => setActiveInstructionTab('sampleIO')}
+                className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                  activeInstructionTab === 'sampleIO'
+                    ? 'bg-[#FFFFFF] dark:bg-[#263952] text-[#172B4D] dark:text-[#F0F5FC] shadow-xs font-semibold'
+                    : 'text-[#4D607B] hover:text-[#172B4D] dark:text-[#B1C2D8] dark:hover:text-[#F0F5FC]'
+                }`}
+              >
+                2. Sample I/O
               </button>
               <button
                 onClick={() => setActiveInstructionTab('diagnosis')}
-                className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-md transition-colors cursor-pointer ${
                   activeInstructionTab === 'diagnosis'
                     ? 'bg-[#FFFFFF] dark:bg-[#263952] text-[#172B4D] dark:text-[#F0F5FC] shadow-xs font-semibold'
                     : 'text-[#4D607B] hover:text-[#172B4D] dark:text-[#B1C2D8] dark:hover:text-[#F0F5FC]'
                 }`}
               >
-                2. Candidate Defense Form
+                3. Defense Form
               </button>
             </div>
 
             {/* Tab 1: Problem Description & Bug Report */}
-            {activeInstructionTab === 'overview' ? (
+            {activeInstructionTab === 'overview' && (
               <div className="p-5 text-xs space-y-4 max-h-[580px] overflow-y-auto leading-relaxed">
                 <div>
                   <h3 className="font-bold text-[#172B4D] dark:text-[#F0F5FC] text-sm mb-1">
-                    Expected Behavior
+                    Expected Behavior & Invariants
                   </h3>
                   <p className="text-[#4D607B] dark:text-[#B1C2D8]">
                     {challenge.expectedBehavior}
@@ -142,22 +256,18 @@ export const DebuggingWorkspace: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="font-bold text-[#172B4D] dark:text-[#F0F5FC]">
-                    Required Candidate Deliverables
-                  </h4>
-                  <ul className="space-y-1.5 text-[#4D607B] dark:text-[#B1C2D8] list-disc list-inside">
-                    <li>
-                      Correct the list-traversal mutation defect in <code className="font-mono text-[#172B4D] dark:text-[#F0F5FC] font-medium">session_limiter.py</code>.
-                    </li>
-                    <li>
-                      Author a targeted regression test in <code className="font-mono text-[#172B4D] dark:text-[#F0F5FC] font-medium">test_session_limiter.py</code> verifying that consecutive-expired elements are not skipped.
-                    </li>
-                    <li>
-                      Document your root cause diagnosis and fix rationale before final submission.
-                    </li>
-                  </ul>
-                </div>
+                {challenge.bugReport.reproductionSteps && (
+                  <div className="space-y-1.5">
+                    <h4 className="font-bold text-[#172B4D] dark:text-[#F0F5FC]">
+                      Reproduction Steps
+                    </h4>
+                    <ol className="space-y-1 text-[#4D607B] dark:text-[#B1C2D8] list-decimal list-inside">
+                      {challenge.bugReport.reproductionSteps.map((step, idx) => (
+                        <li key={idx}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
 
                 <div className="pt-2 border-t border-[#CBD9EB] dark:border-[#34465F] space-y-1">
                   <span className="font-semibold text-[#172B4D] dark:text-[#F0F5FC] block">
@@ -170,67 +280,98 @@ export const DebuggingWorkspace: React.FC = () => {
                   ))}
                 </div>
               </div>
-            ) : (
-              /* Tab 2: Candidate Diagnosis & Defense Form */
+            )}
+
+            {/* Tab 2: Sample Input / Output */}
+            {activeInstructionTab === 'sampleIO' && (
+              <div className="p-5 text-xs space-y-4 max-h-[580px] overflow-y-auto leading-relaxed">
+                <div className="space-y-2">
+                  <h3 className="font-bold text-[#172B4D] dark:text-[#F0F5FC] text-sm">
+                    Canonical Input / Output Example
+                  </h3>
+                  <p className="text-[#4D607B] dark:text-[#B1C2D8]">
+                    Compare how the buggy implementation handles edge cases versus expected specifications.
+                  </p>
+                </div>
+
+                {challenge.sampleIO ? (
+                  <div className="space-y-3">
+                    <div className="p-3.5 rounded-lg bg-[#0D1520] text-[#E6EFFD] font-mono text-xs space-y-1.5 border border-[#203046]">
+                      <span className="text-[#9AACC3] text-[10px] uppercase font-bold block">Sample Input:</span>
+                      <pre className="text-[11px] whitespace-pre-wrap">{challenge.sampleIO.input}</pre>
+                    </div>
+
+                    <div className="p-3.5 rounded-lg bg-[#0D1520] text-[#78C9A4] font-mono text-xs space-y-1.5 border border-[#203046]">
+                      <span className="text-[#9AACC3] text-[10px] uppercase font-bold block">Expected Output:</span>
+                      <pre className="text-[11px] whitespace-pre-wrap">{challenge.sampleIO.output}</pre>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-[#FFFFFF] dark:bg-[#22334A]/50 border border-[#CBD9EB] dark:border-[#34465F]">
+                      <span className="font-semibold text-[#172B4D] dark:text-[#F0F5FC] block mb-1">
+                        Technical Explanation:
+                      </span>
+                      <p className="text-[#4D607B] dark:text-[#B1C2D8]">
+                        {challenge.sampleIO.explanation}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-lg bg-[#D7E5F7]/30 text-center text-[#4D607B] dark:text-[#B1C2D8]">
+                    No custom sample I/O for this challenge. Refer to test cases in the right editor.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 3: Candidate Diagnosis & Defense Form */}
+            {activeInstructionTab === 'diagnosis' && (
               <div className="p-5 text-xs space-y-4 max-h-[580px] overflow-y-auto">
                 <div className="space-y-1">
                   <h3 className="font-bold text-[#172B4D] dark:text-[#F0F5FC] text-sm">
                     Candidate Diagnostic Defense
                   </h3>
                   <p className="text-[#4D607B] dark:text-[#B1C2D8]">
-                    Your written analysis is evaluated under Rubric Dimension 02 & 04.
+                    Rubric evaluators score your engineering reasoning in addition to test passes.
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <label
-                      htmlFor="root-cause"
-                      className="block font-semibold text-[#172B4D] dark:text-[#F0F5FC] mb-1"
-                    >
-                      Root Cause Diagnosis
+                    <label className="block font-semibold text-[#172B4D] dark:text-[#F0F5FC] mb-1">
+                      1. Root Cause Analysis
                     </label>
                     <textarea
-                      id="root-cause"
-                      rows={4}
+                      rows={3}
                       value={rootCauseDiagnosis}
                       onChange={(e) => setRootCauseDiagnosis(e.target.value)}
-                      placeholder="Explain the specific code mechanism that caused the defect (e.g. in-place list mutation during indexed traversal)..."
-                      className="w-full p-3 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#FFFFFF] dark:bg-[#111B2B] text-[#172B4D] dark:text-[#F0F5FC] focus-visible:ring-2 focus-visible:ring-[#3569A8] outline-none leading-relaxed"
+                      placeholder="Identify the exact invariant or boundary condition failure..."
+                      className="w-full p-2.5 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#FFFFFF] dark:bg-[#111B2B] text-[#172B4D] dark:text-[#F0F5FC] text-xs focus:ring-2 focus:ring-[#3569A8] focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label
-                      htmlFor="fix-rationale"
-                      className="block font-semibold text-[#172B4D] dark:text-[#F0F5FC] mb-1"
-                    >
-                      Fix Rationale & Prevention Strategy
+                    <label className="block font-semibold text-[#172B4D] dark:text-[#F0F5FC] mb-1">
+                      2. Fix Justification & Safety
                     </label>
                     <textarea
-                      id="fix-rationale"
                       rows={3}
                       value={fixRationale}
                       onChange={(e) => setFixRationale(e.target.value)}
-                      placeholder="Why does this patch resolve the issue and prevent future regressions?..."
-                      className="w-full p-3 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#FFFFFF] dark:bg-[#111B2B] text-[#172B4D] dark:text-[#F0F5FC] focus-visible:ring-2 focus-visible:ring-[#3569A8] outline-none leading-relaxed"
+                      placeholder="Why is your approach sound? How does it avoid regressions?"
+                      className="w-full p-2.5 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#FFFFFF] dark:bg-[#111B2B] text-[#172B4D] dark:text-[#F0F5FC] text-xs focus:ring-2 focus:ring-[#3569A8] focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label
-                      htmlFor="complexity"
-                      className="block font-semibold text-[#172B4D] dark:text-[#F0F5FC] mb-1"
-                    >
-                      Algorithmic Complexity & Trade-offs
+                    <label className="block font-semibold text-[#172B4D] dark:text-[#F0F5FC] mb-1">
+                      3. Complexity & Algorithmic Trade-offs
                     </label>
-                    <input
-                      id="complexity"
-                      type="text"
+                    <textarea
+                      rows={2}
                       value={complexityTradeoffs}
                       onChange={(e) => setComplexityTradeoffs(e.target.value)}
-                      placeholder="e.g. Time: O(N), Space: O(K) where K is retained events count"
-                      className="w-full p-2.5 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#FFFFFF] dark:bg-[#111B2B] text-[#172B4D] dark:text-[#F0F5FC] focus-visible:ring-2 focus-visible:ring-[#3569A8] outline-none"
+                      placeholder="Time complexity O(N), Space complexity O(K)..."
+                      className="w-full p-2.5 rounded-lg border border-[#CBD9EB] dark:border-[#34465F] bg-[#FFFFFF] dark:bg-[#111B2B] text-[#172B4D] dark:text-[#F0F5FC] text-xs focus:ring-2 focus:ring-[#3569A8] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -239,11 +380,11 @@ export const DebuggingWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column (7 Cols): Code Editor, Test Controls & Output */}
+        {/* Right Column (7 Cols): Code Editor & Execution Results */}
         <div className="lg:col-span-7 space-y-4">
-          {/* Editor File Selector */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 bg-[#DCE7F5] dark:bg-[#111B2B] p-1 rounded-lg border border-[#CBD9EB] dark:border-[#34465F]">
+          {/* Editor Header Navigation */}
+          <div className="flex items-center justify-between pb-1">
+            <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#DCE7F5] dark:bg-[#111B2B] border border-[#CBD9EB] dark:border-[#34465F]">
               <button
                 onClick={() => setActiveEditorTab('source')}
                 className={`px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-2 transition-colors cursor-pointer ${
@@ -253,7 +394,7 @@ export const DebuggingWorkspace: React.FC = () => {
                 }`}
               >
                 <FileCode className="w-3.5 h-3.5 text-[#3569A8] dark:text-[#80B9F5]" />
-                <span>session_limiter.py (Source)</span>
+                <span>{sourceFileName} (Source)</span>
               </button>
               <button
                 onClick={() => setActiveEditorTab('tests')}
@@ -264,19 +405,19 @@ export const DebuggingWorkspace: React.FC = () => {
                 }`}
               >
                 <Terminal className="w-3.5 h-3.5 text-[#3569A8] dark:text-[#80B9F5]" />
-                <span>test_session_limiter.py (Regression)</span>
+                <span>{testFileName} (Regression)</span>
               </button>
             </div>
 
             <span className="text-[11px] text-[#4D607B] dark:text-[#B1C2D8] font-mono hidden sm:inline">
-              Simulated Python 3.12 Sandbox
+              Python 3.12 Sandboxed
             </span>
           </div>
 
           {/* Active Code Editor */}
           {activeEditorTab === 'source' ? (
             <CodeEditor
-              filename="session_limiter.py"
+              filename={sourceFileName}
               value={candidateCode}
               onChange={setCandidateCode}
               minHeight="380px"
@@ -284,7 +425,7 @@ export const DebuggingWorkspace: React.FC = () => {
             />
           ) : (
             <CodeEditor
-              filename="test_session_limiter.py"
+              filename={testFileName}
               value={regressionTestCode}
               onChange={setRegressionTestCode}
               minHeight="380px"
@@ -318,18 +459,6 @@ export const DebuggingWorkspace: React.FC = () => {
                 <div className="flex items-center p-0.5 rounded-lg bg-[#DCE7F5] dark:bg-[#111B2B] border border-[#CBD9EB] dark:border-[#34465F] shadow-2xs">
                   <button
                     type="button"
-                    onClick={() => setExecutionMode('mock')}
-                    className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
-                      executionMode === 'mock'
-                        ? 'bg-white dark:bg-[#263952] text-[#172B4D] dark:text-[#F0F5FC] shadow-xs font-semibold'
-                        : 'text-[#4D607B] dark:text-[#B1C2D8] hover:text-[#172B4D] dark:hover:text-[#F0F5FC]'
-                    }`}
-                    title="Run locally in simulated browser environment"
-                  >
-                    Mock (Simulated)
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => setExecutionMode('server')}
                     className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
                       executionMode === 'server'
@@ -339,6 +468,18 @@ export const DebuggingWorkspace: React.FC = () => {
                     title="Dispatch execution to isolated server execution sandbox (/api/execute)"
                   >
                     Server Verified
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExecutionMode('mock')}
+                    className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                      executionMode === 'mock'
+                        ? 'bg-white dark:bg-[#263952] text-[#172B4D] dark:text-[#F0F5FC] shadow-xs font-semibold'
+                        : 'text-[#4D607B] dark:text-[#B1C2D8] hover:text-[#172B4D] dark:hover:text-[#F0F5FC]'
+                    }`}
+                    title="Run locally in simulated browser environment"
+                  >
+                    Mock (Simulated)
                   </button>
                 </div>
 
@@ -368,7 +509,7 @@ export const DebuggingWorkspace: React.FC = () => {
                 <div className="flex items-center justify-between border-b border-[#203046] pb-2.5">
                   <div className="flex items-center gap-2 text-[#F29A9A] font-bold">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>EXECUTION SERVICE ERROR</span>
+                    <span>EXECUTION ERROR / TIMEOUT</span>
                   </div>
                   <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#B93838]/20 text-[#F29A9A] border border-[#B93838]/40">
                     Source: Server API
@@ -405,7 +546,7 @@ export const DebuggingWorkspace: React.FC = () => {
                     {testResults.passedCount === testResults.totalCount ? (
                       <span className="flex items-center gap-1.5 text-[#78C9A4] font-bold text-xs">
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>TEST SUITE PASSED</span>
+                        <span>ALL TESTS PASSED</span>
                       </span>
                     ) : (
                       <span className="flex items-center gap-1.5 text-[#F29A9A] font-bold text-xs">
@@ -414,15 +555,10 @@ export const DebuggingWorkspace: React.FC = () => {
                       </span>
                     )}
 
-                    {/* Truthful execution source badge */}
                     {testResults.executionSource === 'server_verified' ? (
                       <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#224A7A]/30 text-[#80B9F5] border border-[#3569A8]/50 flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3 text-[#78C9A4]" />
-                        <span>Source: Server Verified</span>
-                      </span>
-                    ) : testResults.executionSource === 'server_simulated' ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#3569A8]/20 text-[#80B9F5] border border-[#3569A8]/40">
-                        Source: Server (Simulated)
+                        <span>Server Verified (Ed25519)</span>
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-[#9AACC3] border border-slate-700">
@@ -448,35 +584,33 @@ export const DebuggingWorkspace: React.FC = () => {
                 )}
 
                 {/* Clean log stream */}
-                <div className="space-y-1 text-[11px] text-[#B1C2D8]">
-                  {testResults.logs.map((log, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="text-[#4D607B] select-none">&gt;</span>
-                      <span className={log.includes('PASSED') ? 'text-[#78C9A4]' : log.includes('FAILED') ? 'text-[#F29A9A]' : ''}>
-                        {log}
-                      </span>
+                <div className="space-y-1 text-[11px] max-h-48 overflow-y-auto leading-relaxed">
+                  {testResults.logs.map((log, idx) => (
+                    <div
+                      key={idx}
+                      className={
+                        log.includes('PASSED')
+                          ? 'text-[#78C9A4]'
+                          : log.includes('FAILED')
+                          ? 'text-[#F29A9A]'
+                          : 'text-[#9AACC3]'
+                      }
+                    >
+                      {log}
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="p-5 rounded-lg border border-dashed border-[#CBD9EB] dark:border-[#34465F] text-center text-xs text-[#4D607B] dark:text-[#B1C2D8]">
-                Click &ldquo;Run Test Suite&rdquo; to execute unit and regression tests against your code (Active:{' '}
-                <span className="font-semibold text-[#3569A8] dark:text-[#80B9F5]">
-                  {executionMode === 'server' ? 'Server API' : 'Client Mock'}
-                </span>
-                ).
+              /* Idle Prompt */
+              <div className="rounded-lg bg-[#0D1520] p-4 font-mono text-xs text-[#9AACC3] flex items-center justify-between border border-[#203046]">
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-[#80B9F5]" />
+                  <span>Interactive Pytest Runtime Ready. Click &ldquo;Run Test Suite&rdquo; to execute code.</span>
+                </div>
+                <span className="text-[11px] text-[#64748B]">Limit: 4.0s</span>
               </div>
             )}
-
-            <p className="text-[11px] text-[#4D607B] dark:text-[#B1C2D8] flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 shrink-0" />
-              <span>
-                {executionMode === 'server'
-                  ? 'Connected to Node.js backend API (/api/execute). Responses are structured simulated contracts.'
-                  : 'Client-side simulated runner for instant local preview and testing.'}
-              </span>
-            </p>
           </div>
         </div>
       </div>

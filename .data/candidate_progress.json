@@ -1,0 +1,214 @@
+{
+  "candidateProfile": {
+    "id": "cand_u9834b12",
+    "fullName": "Jane Developer",
+    "handle": "alexchen_dev",
+    "email": "alex.chen@university.edu",
+    "role": "Staff Systems Engineer",
+    "affiliation": "UC Berkeley (Class of 2026)",
+    "targetRole": "Backend Systems & Infrastructure Engineer",
+    "bio": "Passionate about reliable distributed systems, sliding window rate limiters, and high-throughput concurrency.",
+    "interests": [
+      "Python",
+      "Distributed Systems",
+      "Algorithms",
+      "Reliability Engineering"
+    ]
+  },
+  "points": 450,
+  "streakDays": 4,
+  "lastActiveDate": "2026-10-31",
+  "startedChallengeIds": [
+    "CH-4982",
+    "CH-5120"
+  ],
+  "completedChallengeIds": [
+    "CH-4982"
+  ],
+  "drafts": {
+    "CH-4982": {
+      "code": "# Fix for CH-4982\ndef authenticate(token): return True\n",
+      "regressionTest": "def test_auth(): pass",
+      "updatedAt": "2026-10-31T08:36:10.751Z"
+    }
+  },
+  "assessmentSessions": {
+    "sess_py_4982_active": {
+      "sessionId": "sess_py_4982_active",
+      "candidateId": "cand_u9834b12",
+      "challengeId": "CH-4982",
+      "challengeTitle": "Session Expiry & Sliding Window Purge Buffer",
+      "startedAt": "2026-10-31T08:31:10.741Z",
+      "durationMinutes": 25,
+      "expiresAt": "2026-10-31T08:56:10.741Z",
+      "gracePeriodMinutes": 5,
+      "status": "completed",
+      "lastSavedCode": "def evaluate_session_activity(events, current_time, window_seconds, max_allowed):\n    cutoff_time = current_time - window_seconds\n    retained = [e for e in events if e.get(\"timestamp\", 0) >= cutoff_time]\n    return {\"allowed\": len(retained) <= max_allowed, \"active_count\": len(retained), \"retained_events\": retained}",
+      "lastSavedRegressionTest": "def test_retained_invariants():\n    # Preserves non-expired timestamps\n    pass",
+      "diagnosisNotes": {
+        "rootCause": "In-place iteration mutation caused elements to be skipped during window purge.",
+        "fixRationale": "Constructed new retained slice adhering to immutability invariants.",
+        "complexityTradeoffs": "O(N) linear time and O(N) space guarantee."
+      },
+      "createdAt": "2026-10-31T08:31:10.741Z",
+      "updatedAt": "2026-10-31T08:36:10.754Z",
+      "completedAt": "2026-10-31T08:36:10.754Z"
+    }
+  },
+  "activeSessionId": "sess_py_4982_active",
+  "completedAssessments": [
+    {
+      "id": "asmt_eff51e225728",
+      "credentialId": "cred_9db9ad106a17fc61",
+      "challengeId": "CH-4982",
+      "challengeTitle": "Session Concurrency Limiter",
+      "challengeVersion": "1.0.0",
+      "language": "Python 3.12",
+      "domain": "Systems & Algorithms",
+      "score": 100,
+      "testsPassed": 4,
+      "testsTotal": 4,
+      "completedAt": "2026-10-31T08:36:10.754Z",
+      "durationMinutes": 12,
+      "executionId": "exec-test-1793435770753",
+      "signature": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "pos_server_ed25519_v1",
+      "status": "Demonstrated",
+      "demonstratedSkills": [
+        "Python",
+        "Concurrency",
+        "Redis"
+      ],
+      "anonymized": true
+    },
+    {
+      "id": "asmt_d29f8a471e6f",
+      "credentialId": "cred_934e19861f11e9ab",
+      "challengeId": "CH-4982",
+      "challengeTitle": "Session Concurrency Limiter",
+      "challengeVersion": "1.0.0",
+      "language": "Python 3.12",
+      "domain": "Systems & Algorithms",
+      "score": 100,
+      "testsPassed": 4,
+      "testsTotal": 4,
+      "completedAt": "2026-10-31T08:15:56.662Z",
+      "durationMinutes": 12,
+      "executionId": "exec-test-1793434556661",
+      "signature": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "pos_server_ed25519_v1",
+      "status": "Demonstrated",
+      "demonstratedSkills": [
+        "Python",
+        "Concurrency",
+        "Redis"
+      ],
+      "anonymized": true
+    },
+    {
+      "id": "asmt_75d966f7df86",
+      "credentialId": "cred_d4962c827ed9254b",
+      "challengeId": "CH-4982",
+      "challengeTitle": "Session Concurrency Limiter",
+      "challengeVersion": "1.0.0",
+      "language": "Python 3.12",
+      "domain": "Systems & Algorithms",
+      "score": 100,
+      "testsPassed": 4,
+      "testsTotal": 4,
+      "completedAt": "2026-10-31T08:13:20.466Z",
+      "durationMinutes": 12,
+      "executionId": "exec-test-1793434400465",
+      "signature": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "pos_server_ed25519_v1",
+      "status": "Demonstrated",
+      "demonstratedSkills": [
+        "Python",
+        "Concurrency",
+        "Redis"
+      ],
+      "anonymized": false
+    },
+    {
+      "id": "asmt_9a9b244d24bc",
+      "credentialId": "cred_32619415a201c31d",
+      "challengeId": "CH-4982",
+      "challengeTitle": "Session Concurrency Limiter",
+      "challengeVersion": "1.0.0",
+      "language": "Python 3.12",
+      "domain": "Systems & Algorithms",
+      "score": 100,
+      "testsPassed": 4,
+      "testsTotal": 4,
+      "completedAt": "2026-10-31T08:13:04.889Z",
+      "durationMinutes": 12,
+      "executionId": "exec-test-1793434384889",
+      "signature": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "keyId": "pos_server_ed25519_v1",
+      "status": "Demonstrated",
+      "demonstratedSkills": [
+        "Python",
+        "Concurrency",
+        "Redis"
+      ],
+      "anonymized": false
+    },
+    {
+      "id": "asmt_py_884291",
+      "credentialId": "cred_9a4f8e21c08b472e",
+      "challengeId": "CH-4982",
+      "challengeTitle": "Session Expiry & Sliding Window Purge Buffer",
+      "challengeVersion": "2.1.0",
+      "language": "Python 3.12",
+      "domain": "State Invariants & List Traversal",
+      "score": 100,
+      "testsPassed": 5,
+      "testsTotal": 5,
+      "completedAt": "2026-10-28T08:13:04.870Z",
+      "durationMinutes": 18,
+      "executionId": "exec_srv_init_8a9f2bc104de",
+      "signature": "1bfaa90cae84ca22c1fbada8a8708ad4063467e013909d056eeeaf5fd87a54ca24983c5cdd407b5bf3750d0f6d44c1994ff2d6eabcff6512670b00374d8d8604",
+      "keyId": "pos_server_ed25519_v1",
+      "status": "Demonstrated",
+      "demonstratedSkills": [
+        "Iteration Invariant Preservation",
+        "Regression Test Formulation",
+        "Boundary Value Discrepancy Analysis",
+        "Algorithmic Complexity Defense"
+      ],
+      "anonymized": false
+    }
+  ],
+  "badges": [
+    {
+      "id": "badge-sliding-window",
+      "name": "Sliding Window Specialist",
+      "description": "Preserved iteration invariants and eliminated in-place list mutation defects.",
+      "category": "algorithm",
+      "unlockedAt": "2026-10-28T08:13:04.870Z",
+      "icon": "Layers"
+    },
+    {
+      "id": "badge-zero-regression",
+      "name": "Zero Regression Sentinel",
+      "description": "Authored an isolated regression test that caught consecutive element deletion defects.",
+      "category": "debugging",
+      "unlockedAt": "2026-10-28T08:13:04.870Z",
+      "icon": "ShieldCheck"
+    },
+    {
+      "id": "badge-first-proof",
+      "name": "First Verifiable Proof",
+      "description": "Generated a cryptographically verifiable Ed25519 evidence report.",
+      "category": "milestone",
+      "unlockedAt": "2026-10-28T08:13:04.870Z",
+      "icon": "Award"
+    }
+  ],
+  "privacySettings": {
+    "showFullCodeDiff": true,
+    "showCandidateNotes": true,
+    "anonymizedCandidate": true,
+    "publicProfile": true
+  }
+}

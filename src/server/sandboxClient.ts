@@ -1,6 +1,8 @@
 import type { ExecuteRequest, ExecuteResponse, ApiErrorCode } from '../services/api/types';
+import crypto from 'node:crypto';
 import {
   computeCandidateCodeHash,
+  computeCanonicalRequestFingerprint,
   verifyExecutionSignature,
   validateTimestampFreshness,
   getServerPublicKeyBase64,
@@ -21,55 +23,95 @@ export class SandboxError extends Error {
 }
 
 export function isSandboxConfigured(): boolean {
-  // The server has a built-in isolated Python execution engine available out-of-the-box
   return true;
 }
 
 /**
  * Dispatches candidate code execution to an isolated Python execution engine.
- * When SANDBOX_SERVICE_URL is set, it can delegate to an external runner; otherwise,
- * it runs securely inside the server's native isolated child process environment.
- * Enforces strict 5-second timeout, timestamp freshness validation, durable replay attack prevention,
- * and Ed25519 digital signature verification.
+ * Supports external Cloud Run runner when configured, or native isolated server Python subprocess.
+ * Enforces atomic state reservation, RFC 8785 fingerprints, timestamp freshness, and Ed25519 signatures.
  */
 export async function executeInSandbox(request: ExecuteRequest): Promise<ExecuteResponse> {
   const sandboxUrl = process.env.SANDBOX_SERVICE_URL?.trim();
   const apiKey = process.env.SANDBOX_API_KEY?.trim();
   const runnerPublicKey = process.env.RUNNER_PUBLIC_KEY?.trim();
+  const isProduction = process.env.NODE_ENV === 'production';
 
+  // Production fail-closed enforcement: never silently fall back to local python in production
+  if (isProduction && !sandboxUrl) {
+    throw new SandboxError(
+      'SANDBOX_UNAVAILABLE',
+      'Production configuration error: SANDBOX_SERVICE_URL is required in production environment.'
+    );
+  }
 
   const candidateCodeHash = computeCandidateCodeHash(request.candidateCode);
+  const ownerToken = crypto.randomBytes(16).toString('hex');
+  const executionId = request.executionId || `exec_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
 
-  // 1. Pre-execution Idempotency Conflict and Match Check
-  if (request.idempotencyKey) {
-    try {
-      const idempCheck = await defaultReplayStore.checkIdempotencyKey({
-        idempotencyKey: request.idempotencyKey,
-        challengeId: request.challengeId,
-        candidateCodeHash,
-      });
+  const requestFingerprint = computeCanonicalRequestFingerprint({
+    tenantId: 'default',
+    candidateId: 'candidate',
+    challengeId: request.challengeId,
+    challengeVersion: 1,
+    attemptNumber: 1,
+    candidateCodeHash,
+  });
 
-      if (idempCheck.status === 'CONFLICT') {
-        throw new SandboxError(
-          'IDEMPOTENCY_CONFLICT',
-          `Idempotency key was previously used with a different code submission or challenge.`
-        );
-      }
-
-      if (idempCheck.status === 'MATCH' && idempCheck.cachedResponse) {
-        return idempCheck.cachedResponse;
-      }
-    } catch (err: unknown) {
-      if (err instanceof SandboxError) throw err;
-      if (err instanceof ReplayStorageError) {
-        console.error('[REPLAY_STORAGE_OUTAGE]', err);
-        throw new SandboxError(
-          'SERVICE_UNAVAILABLE',
-          'Replay protection storage is temporarily unavailable. Execution rejected.'
-        );
-      }
-      throw err;
+  // 1. Atomic Lease Reservation
+  let reservation;
+  try {
+    reservation = await defaultReplayStore.reserveExecution({
+      tenantId: 'default',
+      executionId,
+      challengeId: request.challengeId,
+      candidateCodeHash,
+      requestFingerprint,
+      idempotencyKey: request.idempotencyKey,
+      ownerToken,
+      leaseTtlSec: 15,
+    });
+  } catch (err: unknown) {
+    if (err instanceof ReplayStorageError) {
+      console.error('[REPLAY_STORAGE_OUTAGE]', err);
+      throw new SandboxError(
+        'SERVICE_UNAVAILABLE',
+        'Replay protection storage is temporarily unavailable. Execution rejected.'
+      );
     }
+    throw err;
+  }
+
+  if (reservation.status === 'IDEMPOTENT_REPLAY' && reservation.cachedResponse) {
+    return reservation.cachedResponse;
+  }
+
+  if (reservation.status === 'IDEMPOTENCY_CONFLICT') {
+    throw new SandboxError(
+      'IDEMPOTENCY_CONFLICT',
+      reservation.reason || 'Idempotency key was previously used with a different code submission.'
+    );
+  }
+
+  if (reservation.status === 'REPLAY_ATTACK') {
+    throw new SandboxError(
+      'INTEGRITY_VERIFICATION_FAILED',
+      reservation.reason || 'Execution ID was already consumed. Replayed evidence rejected.'
+    );
+  }
+
+  if (reservation.status === 'IN_PROGRESS') {
+    throw new SandboxError(
+      'SERVICE_UNAVAILABLE',
+      'An identical execution is already in progress. Please wait.'
+    );
+  }
+
+  if (reservation.status === 'RETRY_BACKOFF_ACTIVE') {
+    throw new SandboxError(
+      'SERVICE_UNAVAILABLE',
+      reservation.reason || 'Retry backoff is active. Please wait before retrying.'
+    );
   }
 
   let data: any;
@@ -146,13 +188,16 @@ export async function executeInSandbox(request: ExecuteRequest): Promise<Execute
     }
   } else {
     // Execute genuinely and securely via native isolated server Python subprocess
-    data = await executePythonInServer(request);
+    data = await executePythonInServer({
+      ...request,
+      executionId,
+    });
   }
 
   // 2. Response Binding & Context Validation
-  const executionId = String(data.executionId || '').trim();
-  if (!executionId || !/^exec_[a-zA-Z0-9_-]{6,64}$/.test(executionId)) {
-    console.error('[SECURITY_INTEGRITY_VIOLATION] Malformed executionId format:', executionId);
+  const verifiedExecutionId = String(data.executionId || executionId).trim();
+  if (!verifiedExecutionId || !/^exec_[a-zA-Z0-9_-]{6,64}$/.test(verifiedExecutionId)) {
+    console.error('[SECURITY_INTEGRITY_VIOLATION] Malformed executionId format:', verifiedExecutionId);
     throw new SandboxError(
       'INTEGRITY_VERIFICATION_FAILED',
       'Execution response contained a malformed or missing execution identifier.'
@@ -174,7 +219,7 @@ export async function executeInSandbox(request: ExecuteRequest): Promise<Execute
   const freshness = validateTimestampFreshness(data.timestamp);
   if (!freshness.valid) {
     console.error('[SECURITY_STALE_SIGNATURE]', {
-      executionId,
+      executionId: verifiedExecutionId,
       timestamp: data.timestamp,
       reason: freshness.reason,
     });
@@ -196,7 +241,7 @@ export async function executeInSandbox(request: ExecuteRequest): Promise<Execute
 
   const isSignatureValid = verifyExecutionSignature(
     {
-      executionId,
+      executionId: verifiedExecutionId,
       challengeId: request.challengeId,
       candidateCodeHash,
       status: String(data.status || ''),
@@ -210,7 +255,7 @@ export async function executeInSandbox(request: ExecuteRequest): Promise<Execute
 
   if (!isSignatureValid) {
     console.error('[INTEGRITY_VERIFICATION_FAILED]', {
-      executionId,
+      executionId: verifiedExecutionId,
       timestamp: new Date().toISOString(),
     });
     throw new SandboxError(
@@ -221,7 +266,7 @@ export async function executeInSandbox(request: ExecuteRequest): Promise<Execute
 
   // 5. Construct sanitized, trusted response
   const sanitizedResponse: ExecuteResponse = {
-    executionId,
+    executionId: verifiedExecutionId,
     challengeId: request.challengeId,
     status: data.status === 'passed' ? 'passed' : 'failed',
     executionSource: 'server_verified',
@@ -249,47 +294,16 @@ export async function executeInSandbox(request: ExecuteRequest): Promise<Execute
     timestamp: String(data.timestamp),
   };
 
-  // 6. Durable Replay Protection & Idempotency Store
+  // 6. Complete Execution in Atomic State Machine
   try {
-    const replayResult = await defaultReplayStore.checkAndRecord({
-      executionId,
-      challengeId: request.challengeId,
-      candidateCodeHash,
-      idempotencyKey: request.idempotencyKey,
+    await defaultReplayStore.completeExecution({
+      executionId: verifiedExecutionId,
+      ownerToken,
+      requestFingerprint,
       response: sanitizedResponse,
     });
-
-    if (replayResult.status === 'IDEMPOTENT_REPLAY') {
-      return (replayResult.cachedResponse as ExecuteResponse) || sanitizedResponse;
-    }
-
-    if (replayResult.status === 'IDEMPOTENCY_CONFLICT') {
-      throw new SandboxError(
-        'IDEMPOTENCY_CONFLICT',
-        replayResult.reason || 'Idempotency key conflicts with an existing submission.'
-      );
-    }
-
-    if (replayResult.status === 'REPLAY_ATTACK') {
-      console.error('[SECURITY_REPLAY_ATTACK_REJECTED]', {
-        executionId,
-        reason: replayResult.reason,
-      });
-      throw new SandboxError(
-        'INTEGRITY_VERIFICATION_FAILED',
-        'Execution response was already consumed. Replayed evidence rejected.'
-      );
-    }
   } catch (err: unknown) {
-    if (err instanceof SandboxError) throw err;
-    if (err instanceof ReplayStorageError) {
-      console.error('[REPLAY_STORAGE_FAILURE_FAIL_CLOSED]', err);
-      throw new SandboxError(
-        'SERVICE_UNAVAILABLE',
-        'Replay verification storage failure. Execution rejected to maintain security invariants.'
-      );
-    }
-    throw err;
+    console.error('[REPLAY_STORAGE_COMPLETE_ERROR]', err);
   }
 
   return sanitizedResponse;
